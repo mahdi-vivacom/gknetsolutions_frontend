@@ -325,6 +325,7 @@ export const EmployeeDashboard: React.FC = () => {
 
   // Pipeline search filter
   const [pipelineSearch, setPipelineSearch] = useState("");
+  const [expandedStatus, setExpandedStatus] = useState<string | null>(null);
 
   // Pipeline date range filter
   const [dateFrom, setDateFrom] = useState<Date | undefined>(undefined);
@@ -1048,9 +1049,19 @@ export const EmployeeDashboard: React.FC = () => {
 
             {/* PIPELINE VIEW */}
             {currentTab === "pipeline" && (
-              <div className="space-y-4">
+              <div className="space-y-4 min-h-[80vh]">
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-                  <h3 className="text-lg font-bold text-foreground shrink-0">My Active Funnel</h3>
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-lg font-bold text-foreground shrink-0">My Active Funnel</h3>
+                    <Button
+                      onClick={() => setShowCreateLeadModal(true)}
+                      size="sm"
+                      className="bg-orange-500 hover:bg-orange-600 text-white h-8 text-xs font-bold gap-1.5 shadow-sm"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      Add
+                    </Button>
+                  </div>
                   <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
                     {/* Search box */}
                     <div className="relative flex-1 sm:w-64">
@@ -1189,8 +1200,21 @@ export const EmployeeDashboard: React.FC = () => {
                 </div>
 
                 {/* Kanban Columns */}
-                <div className="flex space-x-4 overflow-x-auto pb-4 pt-1 select-none min-h-[500px]">
-                  {KANBAN_STAGES.map((column) => {
+                <div className="flex space-x-4 overflow-x-auto pb-4 pt-1 select-none min-h-[50vh]">
+                  {expandedStatus && (
+                    <div className="w-12 flex shrink-0 justify-center">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => setExpandedStatus(null)}
+                        className="mt-4 hover:bg-muted text-muted-foreground bg-card/60 backdrop-blur-md rounded-full border border-border/40 shadow-sm transition-all"
+                        title="Back to all columns"
+                      >
+                        <X className="w-5 h-5" />
+                      </Button>
+                    </div>
+                  )}
+                  {(expandedStatus ? KANBAN_STAGES.filter(c => c.value === expandedStatus) : KANBAN_STAGES).map((column) => {
                     const getLeadLastUpdatedTime = (lead: Lead) => {
                       let maxTime = lead.createdAt ? new Date(lead.createdAt).getTime() : 0;
                       if (lead.updatedAt) {
@@ -1235,6 +1259,9 @@ export const EmployeeDashboard: React.FC = () => {
                       return getLeadLastUpdatedTime(a) - getLeadLastUpdatedTime(b);
                     });
                     const isOver = dragOverColumn === column.value;
+                    const isExpanded = expandedStatus === column.value;
+                    const visibleLeads = isExpanded ? sortedLeads : sortedLeads.slice(0, 4);
+                    const hasMore = !isExpanded && sortedLeads.length > 4;
 
                     return (
                       <div
@@ -1242,7 +1269,7 @@ export const EmployeeDashboard: React.FC = () => {
                         onDragOver={(e) => handleDragOver(e, column.value)}
                         onDragLeave={handleDragLeave}
                         onDrop={(e) => handleDrop(e, column.value)}
-                        className={`w-72 shrink-0 bg-card/60 backdrop-blur-md rounded-2xl border border-border/40 flex flex-col p-4 transition-all duration-200 ${isOver ? "bg-muted/40 border-orange-500/30 ring-2 ring-orange-500/10 scale-[1.01]" : ""
+                        className={`${isExpanded ? 'w-full max-w-4xl mx-auto' : 'w-72 shrink-0'} bg-card/60 backdrop-blur-md rounded-2xl border border-border/40 flex flex-col p-4 transition-all duration-300 ${isOver ? "bg-muted/40 border-orange-500/30 ring-2 ring-orange-500/10 scale-[1.01]" : ""
                           }`}
                       >
                         {/* Column Header */}
@@ -1254,55 +1281,69 @@ export const EmployeeDashboard: React.FC = () => {
                         </div>
 
                         {/* Cards Container */}
-                        <div className="flex-1 space-y-3 overflow-y-auto max-h-[550px] pr-0.5">
+                        <div className={`flex-1 overflow-y-auto pr-0.5 ${isExpanded ? 'max-h-[750px]' : 'max-h-[600px]'}`}>
                           {loadingLeads ? (
-                            <div className="space-y-2">
+                            <div className="space-y-3">
                               <Skeleton className="h-24 w-full rounded-xl" />
                               <Skeleton className="h-24 w-full rounded-xl" />
                             </div>
-                          ) : sortedLeads.length > 0 ? (
-                            sortedLeads.map((lead) => (
-                              <div
-                                key={lead.id}
-                                draggable
-                                onDragStart={(e) => handleDragStart(e, lead.id)}
-                                className="bg-card border border-border/40 hover:border-orange-500/20 rounded-xl p-3.5 shadow-sm hover:shadow-md cursor-grab active:cursor-grabbing transition-all hover-lift relative overflow-hidden"
-                              >
-                                <h4 className="text-xs font-extrabold text-foreground tracking-tight line-clamp-1">
-                                  {`${lead.firstName} ${lead.lastName || ""}`.trim()}
-                                </h4>
-                                <p className="text-[10px] text-muted-foreground mt-1 line-clamp-1">{lead.projectTitle}</p>
+                          ) : visibleLeads.length > 0 ? (
+                            <div className={`space-y-3 ${isExpanded ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 space-y-0 pb-4' : ''}`}>
+                              {visibleLeads.map((lead) => (
+                                <div
+                                  key={lead.id}
+                                  draggable
+                                  onDragStart={(e) => handleDragStart(e, lead.id)}
+                                  className="bg-card border border-border/40 hover:border-orange-500/20 rounded-xl p-3.5 shadow-sm hover:shadow-md cursor-grab active:cursor-grabbing transition-all hover-lift relative overflow-hidden"
+                                >
+                                  <h4 className="text-xs font-extrabold text-foreground tracking-tight line-clamp-1">
+                                    {`${lead.firstName} ${lead.lastName || ""}`.trim()}
+                                  </h4>
+                                  <p className="text-[10px] text-muted-foreground mt-1 line-clamp-1">{lead.projectTitle}</p>
 
-                                <div className="flex justify-between items-center mt-3 pt-2.5 border-t border-border/30">
-                                  <span className="text-xs font-bold text-orange-500">
-                                    {lead.estimatedBudget
-                                      ? `${lead.currency || "BDT"} ${Number(lead.estimatedBudget).toLocaleString(undefined, { maximumFractionDigits: 0 })}`
-                                      : "Budget: N/A"}
-                                  </span>
-                                  <div className="flex items-center space-x-1">
-                                    <Button
-                                      variant="ghost"
-                                      size="icon"
-                                      onClick={() => setSelectedLeadId(lead.id)}
-                                      className="w-7 h-7 hover:bg-muted text-muted-foreground rounded-lg"
-                                    >
-                                      <Eye className="w-3.5 h-3.5" />
-                                    </Button>
-                                    <Button
-                                      variant="ghost"
-                                      size="icon"
-                                      onClick={() => handleEditClick(lead)}
-                                      className="w-7 h-7 hover:bg-orange-500/10 hover:text-orange-500 text-muted-foreground rounded-lg"
-                                    >
-                                      <Pencil className="w-3.5 h-3.5" />
-                                    </Button>
+                                  <div className="flex justify-between items-center mt-3 pt-2.5 border-t border-border/30">
+                                    <span className="text-xs font-bold text-orange-500">
+                                      {lead.estimatedBudget
+                                        ? `${lead.currency || "BDT"} ${Number(lead.estimatedBudget).toLocaleString(undefined, { maximumFractionDigits: 0 })}`
+                                        : "Budget: N/A"}
+                                    </span>
+                                    <div className="flex items-center space-x-1">
+                                      <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        onClick={() => setSelectedLeadId(lead.id)}
+                                        className="w-7 h-7 hover:bg-muted text-muted-foreground rounded-lg"
+                                      >
+                                        <Eye className="w-3.5 h-3.5" />
+                                      </Button>
+                                      <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        onClick={() => handleEditClick(lead)}
+                                        className="w-7 h-7 hover:bg-orange-500/10 hover:text-orange-500 text-muted-foreground rounded-lg"
+                                      >
+                                        <Pencil className="w-3.5 h-3.5" />
+                                      </Button>
+                                    </div>
                                   </div>
                                 </div>
-                              </div>
-                            ))
+                              ))}
+                            </div>
                           ) : (
-                            <div className="h-32 border border-dashed border-border/40 rounded-xl flex items-center justify-center text-[10px] text-muted-foreground italic">
-                              No leads in stage
+                            <div className="h-32 flex flex-col items-center justify-center text-muted-foreground/50 border-2 border-dashed border-border/40 rounded-xl">
+                              <span className="text-xs font-semibold">No leads in this stage</span>
+                            </div>
+                          )}
+                          
+                          {hasMore && (
+                            <div className="mt-4 pt-2 border-t border-border/30">
+                              <Button
+                                variant="ghost"
+                                className="w-full text-xs text-orange-500 hover:text-orange-600 hover:bg-orange-500/10"
+                                onClick={() => setExpandedStatus(column.value)}
+                              >
+                                See More ({sortedLeads.length - 4})
+                              </Button>
                             </div>
                           )}
                         </div>

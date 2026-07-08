@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { fetchAPI } from "@/lib/api";
 import { 
@@ -19,7 +20,9 @@ import {
   Linkedin,
   Clock,
   Globe,
-  Building2
+  Building2,
+  Plus,
+  Pencil
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -70,23 +73,38 @@ interface LeadHistory {
 
 interface Lead {
   id: string;
-  firstName: string;
-  lastName?: string;
-  email: string;
-  phone?: string;
+  firstName: string | null;
+  lastName: string | null;
+  email: string | null;
+  phone: string | null;
+  whatsapp?: string;
+  jobTitle?: string;
   linkedinProfile?: string;
   skypeId?: string;
   companyName?: string;
+  companyEmail?: string;
+  companyPhone?: string;
+  address?: string;
+  industry?: string;
   companyWebsite?: string;
   companySize?: string;
   country?: string;
   timezone: string;
-  projectTitle: string;
-  requirements?: string;
+  projectTitle: string | null;
+  projectType: string | null;
+  projectSummary: string | null;
+  requirements: string | null;
+  expectedUsers?: string;
   estimatedBudget?: number;
+  budgetRange?: string;
   currency: string;
-  leadSource: string;
+  expectedStartDate?: string;
+  expectedDeliveryTimeline?: string;
+  leadSource: string | null;
   status: string;
+  priority: string;
+  notes?: string;
+  attachments?: string[];
   assignedTo: {
     id: string;
     email: string;
@@ -103,6 +121,7 @@ type SortKey = "firstName" | "email" | "projectTitle" | "createdAt";
 type SortOrder = "asc" | "desc";
 
 export const LeadManagement: React.FC = () => {
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [globalSearch, setGlobalSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
@@ -264,14 +283,13 @@ export const LeadManagement: React.FC = () => {
   const STAGE_COLORS = {
     "New Lead": "bg-blue-500/10 text-blue-500 border border-blue-500/20",
     "Contacted": "bg-cyan-500/10 text-cyan-500 border border-cyan-500/20",
-    "Qualified": "bg-indigo-500/10 text-indigo-500 border border-indigo-500/20",
     "Meeting Scheduled": "bg-purple-500/10 text-purple-500 border border-purple-500/20",
     "Demo Completed": "bg-pink-500/10 text-pink-500 border border-pink-500/20",
     "Proposal Sent": "bg-amber-500/10 text-amber-500 border border-amber-500/20",
     "Negotiation": "bg-teal-500/10 text-teal-500 border border-teal-500/20",
     "Won": "bg-emerald-500/10 text-emerald-500 border border-emerald-500/20",
     "Lost": "bg-destructive/10 text-destructive border border-destructive/20",
-    "Follow-up Later": "bg-slate-500/10 text-slate-500 border border-slate-500/20"
+    "Follow-up": "bg-slate-500/10 text-slate-500 border border-slate-500/20"
   };
 
   if (error) {
@@ -307,21 +325,30 @@ export const LeadManagement: React.FC = () => {
             className="pl-9 bg-card border-border/50 text-sm focus-visible:ring-primary rounded-xl"
           />
         </div>
-        <div className="flex items-center space-x-2 text-xs text-muted-foreground font-semibold">
-          <span>Rows per page:</span>
-          <select
-            value={pageSize}
-            onChange={(e) => {
-              setPageSize(Number(e.target.value));
-              setCurrentPage(1);
-            }}
-            className="bg-card border border-border/50 p-1.5 rounded-lg outline-none cursor-pointer focus:border-primary text-foreground"
+        <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-2 text-xs text-muted-foreground font-semibold mr-4">
+            <span>Rows per page:</span>
+            <select
+              value={pageSize}
+              onChange={(e) => {
+                setPageSize(Number(e.target.value));
+                setCurrentPage(1);
+              }}
+              className="bg-card border border-border/50 p-1.5 rounded-lg outline-none cursor-pointer focus:border-primary text-foreground"
+            >
+              <option value={5}>5</option>
+              <option value={10}>10</option>
+              <option value={20}>20</option>
+              <option value={50}>50</option>
+            </select>
+          </div>
+          <Button 
+            onClick={() => navigate("/admin/leads/new")}
+            className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl text-sm"
           >
-            <option value={5}>5</option>
-            <option value={10}>10</option>
-            <option value={20}>20</option>
-            <option value={50}>50</option>
-          </select>
+            <Plus className="w-4 h-4 mr-2" />
+            Add New Lead
+          </Button>
         </div>
       </div>
 
@@ -395,7 +422,7 @@ export const LeadManagement: React.FC = () => {
                       </TableCell>
                       <TableCell className="py-4 font-bold text-sm">
                         {lead.estimatedBudget 
-                          ? `${lead.currency || "USD"} ${Number(lead.estimatedBudget).toLocaleString(undefined, { minimumFractionDigits: 2 })}`
+                          ? `${lead.currency || "BDT"} ${Number(lead.estimatedBudget).toLocaleString(undefined, { minimumFractionDigits: 2 })}`
                           : "N/A"}
                       </TableCell>
                       <TableCell className="py-4">
@@ -412,7 +439,7 @@ export const LeadManagement: React.FC = () => {
                           <span className="text-xs text-muted-foreground italic">Unassigned</span>
                         )}
                       </TableCell>
-                      <TableCell className="py-4 text-right pr-6">
+                      <TableCell className="py-4 text-right pr-6 space-x-2">
                         <Button
                           variant="ghost"
                           size="sm"
@@ -421,6 +448,15 @@ export const LeadManagement: React.FC = () => {
                         >
                           <Eye className="w-4 h-4 mr-1.5" />
                           Inspect
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => navigate(`/admin/leads/edit/${lead.id}`)}
+                          className="hover:bg-orange-500/10 hover:text-orange-500 rounded-xl"
+                        >
+                          <Pencil className="w-4 h-4 mr-1.5" />
+                          Edit
                         </Button>
                       </TableCell>
                     </TableRow>

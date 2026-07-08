@@ -12,7 +12,10 @@ import ServiceDetail from "./pages/services/ServiceDetail";
 import { AdminLayout } from "./pages/admin/AdminLayout";
 import { DashboardOverview } from "./pages/admin/DashboardOverview";
 import { LeadManagement } from "./pages/admin/LeadManagement";
+import { AddLeadPage } from "./pages/admin/AddLeadPage";
+import { EditLeadPage } from "./pages/admin/EditLeadPage";
 import { DynamicFormPage } from "./pages/admin/DynamicFormPage";
+import { ProfileSettings } from "./pages/shared/ProfileSettings";
 import { AuthProvider } from "./context/AuthContext";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
@@ -55,8 +58,11 @@ const App = () => (
               <Route path="/admin" element={<AdminLayout />}>
                 <Route index element={<DashboardOverview />} />
                 <Route path="leads" element={<LeadManagement />} />
+                <Route path="leads/new" element={<AddLeadPage />} />
+                <Route path="leads/edit/:id" element={<EditLeadPage />} />
                 <Route path="services/new" element={<DynamicFormPage />} />
                 <Route path="projects/new" element={<DynamicFormPage />} />
+                <Route path="profile" element={<ProfileSettings />} />
               </Route>
 
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

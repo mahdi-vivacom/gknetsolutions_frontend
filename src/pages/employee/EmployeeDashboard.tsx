@@ -2,7 +2,15 @@ import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { fetchAPI } from "@/lib/api";
 import { useAuth } from "../../context/AuthContext";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger
+} from "@/components/ui/dropdown-menu";
 import {
   Users,
   DollarSign,
@@ -11,11 +19,12 @@ import {
   LogOut,
   Plus,
   MessageSquare,
-  Calendar,
+  CalendarIcon,
   Send,
   Eye,
   ClipboardList,
   Target,
+  Pencil,
   Mail,
   Phone,
   Linkedin,
@@ -30,7 +39,10 @@ import {
   Menu,
   X,
   PlusCircle,
-  LayoutDashboard
+  LayoutDashboard,
+  ChevronDown,
+  Edit,
+  Search
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -46,12 +58,14 @@ import {
   DialogHeader,
   DialogTitle
 } from "@/components/ui/dialog";
+
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { toast } from "sonner";
-import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
-import { Calendar as CalendarUI } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { format } from "date-fns";
+import { toast } from "sonner";
+import { ProfileSettings } from "../shared/ProfileSettings";
 
 // Import FullCalendar plugins
 import FullCalendar from "@fullcalendar/react";
@@ -94,23 +108,38 @@ interface CalendarEventBackend {
 
 interface Lead {
   id: string;
-  firstName: string;
-  lastName?: string;
-  email: string;
-  phone?: string;
+  firstName: string | null;
+  lastName: string | null;
+  email: string | null;
+  phone: string | null;
+  whatsapp?: string;
+  jobTitle?: string;
   linkedinProfile?: string;
   skypeId?: string;
   companyName?: string;
+  companyEmail?: string;
+  companyPhone?: string;
+  address?: string;
+  industry?: string;
   companyWebsite?: string;
   companySize?: string;
   country?: string;
   timezone: string;
-  projectTitle: string;
+  projectTitle: string | null;
+  projectType: string | null;
+  projectSummary: string | null;
   requirements?: string;
+  expectedUsers?: string;
   estimatedBudget?: number;
+  budgetRange?: string;
   currency: string;
-  leadSource: string;
+  expectedStartDate?: string;
+  expectedDeliveryTimeline: string | null;
+  leadSource: string | null;
   status: string;
+  priority: string;
+  notes?: string;
+  attachments?: string[];
   assignedTo?: {
     id: string;
     email: string;
@@ -121,6 +150,7 @@ interface Lead {
   };
   histories?: LeadHistory[];
   createdAt?: string;
+  updatedAt?: string;
 }
 
 interface LeadsStats {
@@ -135,14 +165,13 @@ interface LeadsStats {
 const KANBAN_STAGES = [
   { label: "New Lead", value: "New Lead", color: "border-t-blue-500" },
   { label: "Contacted", value: "Contacted", color: "border-t-sky-500" },
-  { label: "Qualified", value: "Qualified", color: "border-t-indigo-500" },
   { label: "Meeting Scheduled", value: "Meeting Scheduled", color: "border-t-purple-500" },
   { label: "Demo Completed", value: "Demo Completed", color: "border-t-pink-500" },
   { label: "Proposal Sent", value: "Proposal Sent", color: "border-t-amber-500" },
   { label: "Negotiation", value: "Negotiation", color: "border-t-teal-500" },
   { label: "Won", value: "Won", color: "border-t-emerald-500" },
   { label: "Lost", value: "Lost", color: "border-t-destructive" },
-  { label: "Follow-up Later", value: "Follow-up Later", color: "border-t-slate-500" },
+  { label: "Follow-up", value: "Follow-up", color: "border-t-slate-500" },
 ];
 
 interface DateTimePickerProps {
@@ -200,7 +229,7 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({ value, onChange, id }) 
             variant="outline"
             className="flex-1 justify-start text-left font-normal bg-slate-950 border-slate-850 text-white text-xs h-9 hover:bg-slate-900"
           >
-            <Calendar className="mr-2 h-3.5 w-3.5 text-slate-400" />
+            <CalendarIcon className="mr-2 h-3.5 w-3.5 text-slate-400" />
             {selectedDate && !isNaN(selectedDate.getTime()) ? format(selectedDate, "PPP") : <span className="text-slate-500">Pick a date</span>}
           </Button>
         </PopoverTrigger>
@@ -233,10 +262,11 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({ value, onChange, id }) 
 export const EmployeeDashboard: React.FC = () => {
   const { user, logout, loading: loadingAuth } = useAuth();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const queryClient = useQueryClient();
 
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [currentTab, setCurrentTab] = useState<"pipeline" | "calendar">("pipeline");
+  const [currentTab, setCurrentTab] = useState<"pipeline" | "calendar" | "profile">("pipeline");
   const [selectedLeadId, setSelectedLeadId] = useState<string | null>(null);
   const [newLogNote, setNewLogNote] = useState("");
   const [isSubmittingLog, setIsSubmittingLog] = useState(false);
@@ -252,34 +282,108 @@ export const EmployeeDashboard: React.FC = () => {
   // Daily agenda date state
   const [selectedAgendaDate, setSelectedAgendaDate] = useState<Date>(new Date());
 
-  // Create Lead Modal and Form state
+  // Create Lead / Edit Lead Modal and Form state
   const [showCreateLeadModal, setShowCreateLeadModal] = useState(false);
+  const [editingLeadId, setEditingLeadId] = useState<string | null>(null);
   const [leadFirstName, setLeadFirstName] = useState("");
   const [leadLastName, setLeadLastName] = useState("");
   const [leadEmail, setLeadEmail] = useState("");
   const [leadPhone, setLeadPhone] = useState("");
+  const [leadWhatsapp, setLeadWhatsapp] = useState("");
+  const [leadJobTitle, setLeadJobTitle] = useState("");
   const [leadLinkedin, setLeadLinkedin] = useState("");
   const [leadSkype, setLeadSkype] = useState("");
   const [leadCompanyName, setLeadCompanyName] = useState("");
+  const [leadCompanyEmail, setLeadCompanyEmail] = useState("");
+  const [leadCompanyPhone, setLeadCompanyPhone] = useState("");
+  const [leadAddress, setLeadAddress] = useState("");
+  const [leadIndustry, setLeadIndustry] = useState("");
   const [leadCompanyWebsite, setLeadCompanyWebsite] = useState("");
   const [leadCompanySize, setLeadCompanySize] = useState("1-10");
   const [leadCountry, setLeadCountry] = useState("");
   const [leadTimezone, setLeadTimezone] = useState("UTC");
   const [leadProjectTitle, setLeadProjectTitle] = useState("");
+  const [leadProjectType, setLeadProjectType] = useState("");
+  const [leadProjectSummary, setLeadProjectSummary] = useState("");
   const [leadRequirements, setLeadRequirements] = useState("");
+  const [leadOwnerId, setLeadOwnerId] = useState("");
+  const [leadDateAdded, setLeadDateAdded] = useState(new Date().toISOString().split('T')[0]);
+  const [leadExpectedUsers, setLeadExpectedUsers] = useState("");
   const [leadBudget, setLeadBudget] = useState("0");
-  const [leadCurrency, setLeadCurrency] = useState("USD");
-  const [leadSource, setLeadSource] = useState("LinkedIn");
+  const [leadBudgetRange, setLeadBudgetRange] = useState("");
+  const [leadCurrency, setLeadCurrency] = useState("BDT");
+  const [leadExpectedStartDate, setLeadExpectedStartDate] = useState("");
+  const [leadExpectedDeliveryTimeline, setLeadExpectedDeliveryTimeline] = useState("");
+  const [leadSource, setLeadSource] = useState("Website");
+  const [leadStatus, setLeadStatus] = useState("New Lead");
+  const [leadPriority, setLeadPriority] = useState("Medium");
+  const [leadNotes, setLeadNotes] = useState("");
+  const [leadAttachments, setLeadAttachments] = useState(""); // as comma separated URLs for now
 
   // Drag state for visual hover effects
   const [dragOverColumn, setDragOverColumn] = useState<string | null>(null);
+
+  // Pipeline search filter
+  const [pipelineSearch, setPipelineSearch] = useState("");
+
+  // Pipeline date range filter
+  const [dateFrom, setDateFrom] = useState<Date | undefined>(undefined);
+  const [dateTo, setDateTo] = useState<Date | undefined>(undefined);
+  const [datePreset, setDatePreset] = useState<string>("");
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [datePickerMonth, setDatePickerMonth] = useState<Date>(new Date());
+
+  const applyDatePreset = (preset: string) => {
+    const now = new Date();
+    const startOf = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
+    setDatePreset(preset);
+    if (preset === "today") {
+      setDateFrom(startOf(now)); setDateTo(startOf(now));
+    } else if (preset === "yesterday") {
+      const y = new Date(now); y.setDate(y.getDate() - 1);
+      setDateFrom(startOf(y)); setDateTo(startOf(y));
+    } else if (preset === "last7") {
+      const d = new Date(now); d.setDate(d.getDate() - 6);
+      setDateFrom(startOf(d)); setDateTo(startOf(now));
+    } else if (preset === "last30") {
+      const d = new Date(now); d.setDate(d.getDate() - 29);
+      setDateFrom(startOf(d)); setDateTo(startOf(now));
+    } else if (preset === "thisMonth") {
+      setDateFrom(new Date(now.getFullYear(), now.getMonth(), 1));
+      setDateTo(new Date(now.getFullYear(), now.getMonth() + 1, 0));
+    } else if (preset === "lastMonth") {
+      setDateFrom(new Date(now.getFullYear(), now.getMonth() - 1, 1));
+      setDateTo(new Date(now.getFullYear(), now.getMonth(), 0));
+    }
+    if (preset !== "custom") setShowDatePicker(false);
+  };
+
+  const clearDateFilter = () => {
+    setDateFrom(undefined); setDateTo(undefined); setDatePreset("");
+  };
+
+  const dateRangeLabel = () => {
+    if (!dateFrom && !dateTo) return "Date Range";
+    const fmt = (d: Date) => format(d, "MMM d, yyyy");
+    if (dateFrom && dateTo && dateFrom.toDateString() === dateTo.toDateString()) return fmt(dateFrom);
+    return `${dateFrom ? fmt(dateFrom) : ""} – ${dateTo ? fmt(dateTo) : ""}`;
+  };
 
   // Redirect if unauthorized
   React.useEffect(() => {
     if (!loadingAuth && !user) {
       navigate("/login");
+    } else if (user && !leadOwnerId) {
+      setLeadOwnerId(user.id);
     }
   }, [user, loadingAuth, navigate]);
+
+  // Fetch active employees (for assignment)
+  const { data: employees = [] } = useQuery<any[]>({
+    queryKey: ["employees"],
+    queryFn: () => fetchAPI<any[]>("/user/employees"),
+    enabled: !!user,
+  });
 
   // Fetch employee leads
   const { data: leads = [], isLoading: loadingLeads } = useQuery<Lead[]>({
@@ -325,6 +429,27 @@ export const EmployeeDashboard: React.FC = () => {
     },
     onError: (err: any) => {
       toast.error(err.message || "Failed to create lead");
+    }
+  });
+
+  // Update Lead Mutation
+  const updateLeadMutation = useMutation({
+    mutationFn: (updatedLead: any) =>
+      fetchAPI<Lead>(`/leads/${editingLeadId}`, {
+        method: "PUT",
+        body: JSON.stringify(updatedLead),
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["employeeLeads"] });
+      queryClient.invalidateQueries({ queryKey: ["employeeStats"] });
+      if (selectedLeadId) refetchLeadDetails();
+      setShowCreateLeadModal(false);
+      setEditingLeadId(null);
+      resetCreateForm();
+      toast.success("Lead updated successfully");
+    },
+    onError: (err: any) => {
+      toast.error(err.message || "Failed to update lead");
     }
   });
 
@@ -396,18 +521,78 @@ export const EmployeeDashboard: React.FC = () => {
     setLeadLastName("");
     setLeadEmail("");
     setLeadPhone("");
+    setLeadWhatsapp("");
+    setLeadJobTitle("");
     setLeadLinkedin("");
     setLeadSkype("");
     setLeadCompanyName("");
+    setLeadCompanyEmail("");
+    setLeadCompanyPhone("");
+    setLeadAddress("");
+    setLeadIndustry("");
     setLeadCompanyWebsite("");
     setLeadCompanySize("1-10");
     setLeadCountry("");
     setLeadTimezone("UTC");
     setLeadProjectTitle("");
+    setLeadProjectType("");
+    setLeadProjectSummary("");
     setLeadRequirements("");
+    setLeadExpectedUsers("");
     setLeadBudget("0");
-    setLeadCurrency("USD");
+    setLeadBudgetRange("");
+    setLeadCurrency("BDT");
+    setLeadExpectedStartDate("");
+    setLeadExpectedDeliveryTimeline("");
     setLeadSource("Website");
+    setLeadStatus("New Lead");
+    setLeadPriority("Medium");
+    setLeadNotes("");
+    setLeadAttachments("");
+    setLeadOwnerId(user?.id || "");
+    setLeadDateAdded(new Date().toISOString().split('T')[0]);
+    setEditingLeadId(null);
+  };
+
+  const handleEditClick = (lead: Lead) => {
+    setEditingLeadId(lead.id);
+    setLeadFirstName(lead.firstName || "");
+    setLeadLastName(lead.lastName || "");
+    setLeadEmail(lead.email || "");
+    setLeadPhone(lead.phone || "");
+    setLeadWhatsapp(lead.whatsapp || "");
+    setLeadJobTitle(lead.jobTitle || "");
+    setLeadLinkedin(lead.linkedinProfile || "");
+    setLeadSkype(lead.skypeId || "");
+    setLeadCompanyName(lead.companyName || "");
+    setLeadCompanyEmail(lead.companyEmail || "");
+    setLeadCompanyPhone(lead.companyPhone || "");
+    setLeadAddress(lead.address || "");
+    setLeadIndustry(lead.industry || "");
+    setLeadCompanyWebsite(lead.companyWebsite || "");
+    setLeadCompanySize(lead.companySize || "1-10");
+    setLeadCountry(lead.country || "");
+    setLeadTimezone(lead.timezone || "UTC");
+    setLeadProjectTitle(lead.projectTitle || "");
+    setLeadProjectType(lead.projectType || "");
+    setLeadProjectSummary(lead.projectSummary || "");
+    setLeadRequirements(lead.requirements || "");
+    setLeadExpectedUsers(lead.expectedUsers || "");
+    setLeadBudget(lead.estimatedBudget ? lead.estimatedBudget.toString() : "0");
+    setLeadBudgetRange(lead.budgetRange || "");
+    setLeadCurrency(lead.currency || "BDT");
+    setLeadExpectedStartDate(lead.expectedStartDate ? String(lead.expectedStartDate).split('T')[0] : "");
+    setLeadExpectedDeliveryTimeline(lead.expectedDeliveryTimeline || "");
+    setLeadSource(lead.leadSource || "Website");
+    setLeadStatus(lead.status || "New Lead");
+    setLeadPriority(lead.priority || "Medium");
+    setLeadNotes(lead.notes || "");
+    setLeadAttachments(lead.attachments ? lead.attachments.join(', ') : "");
+    setLeadOwnerId(lead.assignedTo?.id || user?.id || "");
+    if (lead.createdAt) {
+      setLeadDateAdded(lead.createdAt.split('T')[0]);
+    }
+    setShowCreateLeadModal(true);
   };
 
   // Drag and Drop handlers
@@ -462,6 +647,8 @@ export const EmployeeDashboard: React.FC = () => {
         body: JSON.stringify({ note: newLogNote }),
       });
       setNewLogNote("");
+      queryClient.invalidateQueries({ queryKey: ["employeeLeads"] });
+      queryClient.invalidateQueries({ queryKey: ["employeeStats"] });
       refetchLeadDetails();
       toast.success("Timeline note logged");
     } catch (err: any) {
@@ -492,33 +679,49 @@ export const EmployeeDashboard: React.FC = () => {
 
   const handleCreateLead = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!leadFirstName || !leadEmail || !leadProjectTitle || !leadSource) {
-      toast.error("Please fill in all required fields.");
-      return;
-    }
 
     const payload = {
-      firstName: leadFirstName,
+      firstName: leadFirstName || "Unknown Prospect",
       lastName: leadLastName || null,
-      email: leadEmail,
+      email: leadEmail || `no-email-${Date.now()}@placeholder.com`,
       phone: leadPhone || null,
+      whatsapp: leadWhatsapp || null,
+      jobTitle: leadJobTitle || null,
       linkedinProfile: leadLinkedin || null,
       skypeId: leadSkype || null,
       companyName: leadCompanyName || null,
+      companyEmail: leadCompanyEmail || null,
+      companyPhone: leadCompanyPhone || null,
+      address: leadAddress || null,
+      industry: leadIndustry || null,
       companyWebsite: leadCompanyWebsite || null,
       companySize: leadCompanySize || null,
       country: leadCountry || null,
       timezone: leadTimezone,
-      projectTitle: leadProjectTitle,
+      projectTitle: leadProjectTitle || "Untitled Project",
+      projectType: leadProjectType || null,
+      projectSummary: leadProjectSummary || null,
       requirements: leadRequirements || null,
+      expectedUsers: leadExpectedUsers || null,
       estimatedBudget: parseFloat(leadBudget) || 0,
+      budgetRange: leadBudgetRange || null,
       currency: leadCurrency,
-      leadSource: leadSource,
-      status: "New Lead",
-      assignedToId: user.id
+      expectedStartDate: leadExpectedStartDate || null,
+      expectedDeliveryTimeline: leadExpectedDeliveryTimeline || null,
+      leadSource: leadSource || null,
+      status: leadStatus || "New Lead",
+      priority: leadPriority || "Medium",
+      notes: leadNotes || null,
+      attachments: leadAttachments ? leadAttachments.split(',').map(s => s.trim()).filter(Boolean) : null,
+      assignedToId: leadOwnerId || user.id,
+      createdAt: leadDateAdded || undefined,
     };
 
-    createLeadMutation.mutate(payload);
+    if (editingLeadId) {
+      updateLeadMutation.mutate(payload);
+    } else {
+      createLeadMutation.mutate(payload);
+    }
   };
 
   // Convert stats to FullCalendar format
@@ -659,13 +862,16 @@ export const EmployeeDashboard: React.FC = () => {
               : "text-muted-foreground hover:bg-muted hover:text-foreground"
               }`}
           >
-            <Calendar className={`w-5 h-5 shrink-0 ${currentTab === "calendar" ? "" : "group-hover:scale-110 transition-transform"}`} />
+            <CalendarIcon className={`w-5 h-5 shrink-0 ${currentTab === "calendar" ? "" : "group-hover:scale-110 transition-transform"}`} />
             {sidebarOpen && <span className="text-sm">Meetings Calendar</span>}
           </button>
 
           {/* Create Lead Button */}
           <button
-            onClick={() => setShowCreateLeadModal(true)}
+            onClick={() => {
+              resetCreateForm();
+              setShowCreateLeadModal(true);
+            }}
             className="w-full flex items-center space-x-3 px-4 py-3 rounded-xl font-medium text-orange-500 hover:bg-orange-500/10 transition-all duration-200 group"
           >
             <PlusCircle className="w-5 h-5 shrink-0 group-hover:scale-110 transition-transform" />
@@ -706,21 +912,59 @@ export const EmployeeDashboard: React.FC = () => {
 
           <div className="flex items-center space-x-4">
             <ThemeToggle />
-            <div className="flex items-center space-x-2.5 p-1.5 bg-muted/40 rounded-xl border border-border/40">
-              <div className="w-8 h-8 rounded-lg bg-orange-500/10 text-orange-500 flex items-center justify-center font-bold text-xs uppercase">
-                {user.firstName[0] + (user.lastName?.[0] || "")}
-              </div>
-              <div className="hidden md:block text-left pr-1">
-                <div className="text-xs font-semibold leading-none">{user.firstName} {user.lastName || ""}</div>
-                <span className="text-[9px] text-muted-foreground font-bold capitalize">{user.role}</span>
-              </div>
-            </div>
+            {/* User Profile Menu */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="flex items-center space-x-2.5 p-1.5 hover:bg-muted rounded-xl transition-all border border-transparent hover:border-border/80">
+                  <div className="w-8 h-8 rounded-lg bg-orange-500/10 text-orange-500 flex items-center justify-center font-bold text-xs uppercase">
+                    {(user.firstName[0] || "") + (user.lastName?.[0] || "")}
+                  </div>
+                  <div className="hidden md:block text-left">
+                    <div className="text-xs font-semibold leading-none">{user.firstName} {user.lastName || ""}</div>
+                    <span className="text-[9px] text-muted-foreground font-bold capitalize">{user.role}</span>
+                  </div>
+                  <ChevronDown className="w-4 h-4 text-muted-foreground" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56 p-2 border-border/50">
+                <DropdownMenuLabel className="px-3 py-2 text-sm font-semibold">My Account</DropdownMenuLabel>
+                <DropdownMenuSeparator className="bg-border/50" />
+                <DropdownMenuItem 
+                  onClick={() => {
+                    setCurrentTab("profile");
+                    setSearchParams({ tab: "profile" });
+                  }} 
+                  className="rounded-lg cursor-pointer"
+                >
+                  Profile Settings
+                </DropdownMenuItem>
+                <DropdownMenuItem 
+                  onClick={() => {
+                    setCurrentTab("profile");
+                    setSearchParams({ tab: "security" });
+                  }} 
+                  className="rounded-lg cursor-pointer"
+                >
+                  Security Settings
+                </DropdownMenuItem>
+                <DropdownMenuSeparator className="bg-border/50" />
+                <DropdownMenuItem 
+                  className="text-destructive focus:bg-destructive/10 focus:text-destructive rounded-lg cursor-pointer"
+                  onClick={handleLogout}
+                >
+                  Logout
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </header>
 
         {/* Content Container */}
         <main className="flex-1 overflow-y-auto px-6 py-8 lg:px-8 bg-background/50">
-          <div className="max-w-6xl mx-auto space-y-6">
+          {currentTab === "profile" ? (
+            <ProfileSettings />
+          ) : (
+            <div className="max-w-6xl mx-auto space-y-6">
 
             {/* KPI Cards Grid */}
             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
@@ -805,15 +1049,191 @@ export const EmployeeDashboard: React.FC = () => {
             {/* PIPELINE VIEW */}
             {currentTab === "pipeline" && (
               <div className="space-y-4">
-                <div className="flex justify-between items-center">
-                  <h3 className="text-lg font-bold text-foreground">My Active Funnel</h3>
-                  <span className="text-xs text-muted-foreground font-semibold">Drag cards between columns to transition status</span>
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                  <h3 className="text-lg font-bold text-foreground shrink-0">My Active Funnel</h3>
+                  <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+                    {/* Search box */}
+                    <div className="relative flex-1 sm:w-64">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+                      <Input
+                        value={pipelineSearch}
+                        onChange={(e) => setPipelineSearch(e.target.value)}
+                        placeholder="Filter by name, company, phone, email..."
+                        className="pl-9 h-8 text-xs bg-muted/40 border-border/40 focus-visible:ring-orange-500"
+                      />
+                      {pipelineSearch && (
+                        <button
+                          onClick={() => setPipelineSearch("")}
+                          className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      )}
+                    </div>
+
+                    {/* Date range picker */}
+                    <Popover open={showDatePicker} onOpenChange={setShowDatePicker}>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className={`h-8 text-xs gap-1.5 border-border/40 bg-muted/40 hover:bg-muted ${
+                            (dateFrom || dateTo) ? "border-orange-500/50 text-orange-400" : "text-muted-foreground"
+                          }`}
+                        >
+                          <CalendarIcon className="w-3.5 h-3.5" />
+                          {dateRangeLabel()}
+                          {(dateFrom || dateTo) && (
+                            <span
+                              onClick={(e) => { e.stopPropagation(); clearDateFilter(); }}
+                              className="ml-1 text-muted-foreground hover:text-foreground cursor-pointer"
+                            >
+                              <X className="w-3 h-3" />
+                            </span>
+                          )}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0 bg-card border-border shadow-xl rounded-xl overflow-hidden" align="end">
+                        <div className="flex">
+                          {/* Presets sidebar */}
+                          <div className="w-36 border-r border-border bg-muted/30 p-2 space-y-0.5 text-xs">
+                            {[
+                              { label: "Today", key: "today" },
+                              { label: "Yesterday", key: "yesterday" },
+                              { label: "Last 7 Days", key: "last7" },
+                              { label: "Last 30 Days", key: "last30" },
+                              { label: "This Month", key: "thisMonth" },
+                              { label: "Last Month", key: "lastMonth" },
+                              { label: "Custom Range", key: "custom" },
+                            ].map((p) => (
+                              <button
+                                key={p.key}
+                                onClick={() => {
+                                  if (p.key === "custom") {
+                                    setDatePreset("custom");
+                                  } else {
+                                    applyDatePreset(p.key);
+                                  }
+                                }}
+                                className={`w-full text-left px-3 py-1.5 rounded-lg font-medium transition-all ${
+                                  datePreset === p.key
+                                    ? "bg-orange-500 text-white"
+                                    : "text-foreground hover:bg-muted"
+                                }`}
+                              >
+                                {p.label}
+                              </button>
+                            ))}
+                          </div>
+
+                          {/* Calendar panel (custom range) */}
+                          {datePreset === "custom" && (
+                            <div className="p-3 space-y-3">
+                              <div className="flex gap-2 text-xs">
+                                <div className="flex items-center gap-1.5 border border-border rounded px-2 py-1 bg-muted/40">
+                                  <CalendarIcon className="w-3 h-3 text-muted-foreground" />
+                                  <span className="text-foreground font-medium">
+                                    {dateFrom ? format(dateFrom, "MM/dd/yyyy") : "Start date"}
+                                  </span>
+                                </div>
+                                <div className="flex items-center gap-1.5 border border-border rounded px-2 py-1 bg-muted/40">
+                                  <CalendarIcon className="w-3 h-3 text-muted-foreground" />
+                                  <span className="text-foreground font-medium">
+                                    {dateTo ? format(dateTo, "MM/dd/yyyy") : "End date"}
+                                  </span>
+                                </div>
+                              </div>
+                              <div className="flex gap-4">
+                                <CalendarComponent
+                                  mode="single"
+                                  selected={dateFrom}
+                                  onSelect={(d) => { setDateFrom(d); }}
+                                  month={datePickerMonth}
+                                  onMonthChange={setDatePickerMonth}
+                                  initialFocus
+                                  className="rounded-lg border border-border"
+                                />
+                                <CalendarComponent
+                                  mode="single"
+                                  selected={dateTo}
+                                  onSelect={(d) => { setDateTo(d); }}
+                                  month={new Date(datePickerMonth.getFullYear(), datePickerMonth.getMonth() + 1, 1)}
+                                  className="rounded-lg border border-border"
+                                />
+                              </div>
+                              <div className="flex justify-end gap-2 pt-1 border-t border-border">
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  className="h-7 text-xs"
+                                  onClick={() => { clearDateFilter(); setShowDatePicker(false); }}
+                                >
+                                  Cancel
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  className="h-7 text-xs bg-orange-500 hover:bg-orange-600 text-white"
+                                  onClick={() => setShowDatePicker(false)}
+                                >
+                                  Apply
+                                </Button>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </PopoverContent>
+                    </Popover>
+
+                    <span className="text-xs text-muted-foreground font-semibold whitespace-nowrap hidden xl:block">Drag to transition status</span>
+                  </div>
                 </div>
 
                 {/* Kanban Columns */}
                 <div className="flex space-x-4 overflow-x-auto pb-4 pt-1 select-none min-h-[500px]">
                   {KANBAN_STAGES.map((column) => {
-                    const columnLeads = leads.filter(l => l.status === column.value);
+                    const getLeadLastUpdatedTime = (lead: Lead) => {
+                      let maxTime = lead.createdAt ? new Date(lead.createdAt).getTime() : 0;
+                      if (lead.updatedAt) {
+                        const updatedTime = new Date(lead.updatedAt).getTime();
+                        if (updatedTime > maxTime) maxTime = updatedTime;
+                      }
+                      if (lead.histories && lead.histories.length > 0) {
+                        lead.histories.forEach(h => {
+                          if (h.createdAt) {
+                            const historyTime = new Date(h.createdAt).getTime();
+                            if (historyTime > maxTime) maxTime = historyTime;
+                          }
+                        });
+                      }
+                      return maxTime;
+                    };
+                    const fq = pipelineSearch.toLowerCase();
+                    const columnLeads = leads.filter(l => {
+                      if (l.status !== column.value) return false;
+                      if (fq && !(
+                        `${l.firstName} ${l.lastName || ""}`.toLowerCase().includes(fq) ||
+                        (l.companyName || "").toLowerCase().includes(fq) ||
+                        (l.phone || "").toLowerCase().includes(fq) ||
+                        (l.email || "").toLowerCase().includes(fq)
+                      )) return false;
+                      if (dateFrom || dateTo) {
+                        const updatedTime = getLeadLastUpdatedTime(l);
+                        if (!updatedTime) return false;
+                        const updated = new Date(updatedTime);
+                        const day = new Date(updated.getFullYear(), updated.getMonth(), updated.getDate());
+                        if (dateFrom && day < dateFrom) return false;
+                        if (dateTo) {
+                          const endDay = new Date(dateTo.getFullYear(), dateTo.getMonth(), dateTo.getDate() + 1);
+                          if (day >= endDay) return false;
+                        }
+                      }
+                      return true;
+                    });
+
+                    // Sort ascending by last updated time (oldest update first)
+                    const sortedLeads = [...columnLeads].sort((a, b) => {
+                      return getLeadLastUpdatedTime(a) - getLeadLastUpdatedTime(b);
+                    });
                     const isOver = dragOverColumn === column.value;
 
                     return (
@@ -829,7 +1249,7 @@ export const EmployeeDashboard: React.FC = () => {
                         <div className="flex justify-between items-center mb-4 pb-2 border-b border-border/30">
                           <span className="text-xs font-extrabold text-foreground">{column.label}</span>
                           <Badge variant="secondary" className="px-2 py-0 text-[10px] rounded-md font-bold bg-muted/80">
-                            {columnLeads.length}
+                            {sortedLeads.length}
                           </Badge>
                         </div>
 
@@ -840,8 +1260,8 @@ export const EmployeeDashboard: React.FC = () => {
                               <Skeleton className="h-24 w-full rounded-xl" />
                               <Skeleton className="h-24 w-full rounded-xl" />
                             </div>
-                          ) : columnLeads.length > 0 ? (
-                            columnLeads.map((lead) => (
+                          ) : sortedLeads.length > 0 ? (
+                            sortedLeads.map((lead) => (
                               <div
                                 key={lead.id}
                                 draggable
@@ -856,17 +1276,27 @@ export const EmployeeDashboard: React.FC = () => {
                                 <div className="flex justify-between items-center mt-3 pt-2.5 border-t border-border/30">
                                   <span className="text-xs font-bold text-orange-500">
                                     {lead.estimatedBudget
-                                      ? `${lead.currency || "USD"} ${Number(lead.estimatedBudget).toLocaleString(undefined, { maximumFractionDigits: 0 })}`
+                                      ? `${lead.currency || "BDT"} ${Number(lead.estimatedBudget).toLocaleString(undefined, { maximumFractionDigits: 0 })}`
                                       : "Budget: N/A"}
                                   </span>
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    onClick={() => setSelectedLeadId(lead.id)}
-                                    className="w-7 h-7 hover:bg-muted text-muted-foreground rounded-lg"
-                                  >
-                                    <Eye className="w-3.5 h-3.5" />
-                                  </Button>
+                                  <div className="flex items-center space-x-1">
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      onClick={() => setSelectedLeadId(lead.id)}
+                                      className="w-7 h-7 hover:bg-muted text-muted-foreground rounded-lg"
+                                    >
+                                      <Eye className="w-3.5 h-3.5" />
+                                    </Button>
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      onClick={() => handleEditClick(lead)}
+                                      className="w-7 h-7 hover:bg-orange-500/10 hover:text-orange-500 text-muted-foreground rounded-lg"
+                                    >
+                                      <Pencil className="w-3.5 h-3.5" />
+                                    </Button>
+                                  </div>
                                 </div>
                               </div>
                             ))
@@ -1050,6 +1480,7 @@ export const EmployeeDashboard: React.FC = () => {
               </div>
             )}
           </div>
+          )}
         </main>
       </div>
 
@@ -1060,181 +1491,311 @@ export const EmployeeDashboard: React.FC = () => {
           resetCreateForm();
         }
       }}>
-        <DialogContent className="max-w-3xl bg-slate-900 border-slate-800 text-white rounded-2xl overflow-y-auto max-h-[95vh] p-6">
+        <DialogContent className="max-w-7xl w-[95vw] bg-slate-900 border-slate-800 text-white rounded-2xl overflow-y-auto max-h-[95vh] p-6">
           <DialogHeader>
             <DialogTitle className="text-lg font-bold text-white flex items-center gap-2">
               <PlusCircle className="w-5 h-5 text-orange-500" />
-              Add New Lead Prospect
+              {editingLeadId ? "Edit Lead Prospect" : "Add New Lead Prospect"}
             </DialogTitle>
             <DialogDescription className="text-slate-400 text-xs">
-              Fill in customer profile information, initial project title, requirements, and budget details.
+              {editingLeadId ? "Update the customer profile information, requirements, and budget details." : "Fill in customer profile information, initial project title, requirements, and budget details."}
             </DialogDescription>
           </DialogHeader>
 
-          <form onSubmit={handleCreateLead} className="space-y-4 py-4">
-            {/* 1. Personal Names */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-1.5">
-                <Label htmlFor="firstName" className="text-slate-300 text-xs font-semibold">First Name *</Label>
-                <Input
-                  id="firstName"
-                  value={leadFirstName}
-                  onChange={(e) => setLeadFirstName(e.target.value)}
-                  className="bg-slate-950 border-slate-800 focus-visible:ring-orange-500 text-sm"
-                  required
-                />
+          <form onSubmit={handleCreateLead} className="space-y-6 py-4">
+            {/* 1. Business Information */}
+            <div className="space-y-4">
+              <h3 className="text-sm font-bold text-orange-500 border-b border-slate-800 pb-1">1. Business Information</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <Label htmlFor="companyName" className="text-slate-300 text-xs font-semibold">Company Name</Label>
+                  <Input
+                    id="companyName"
+                    value={leadCompanyName}
+                    onChange={(e) => setLeadCompanyName(e.target.value)}
+                    className="bg-slate-950 border-slate-800 focus-visible:ring-orange-500 text-sm"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="companyPhone" className="text-slate-300 text-xs font-semibold">Phone</Label>
+                  <Input
+                    id="companyPhone"
+                    value={leadCompanyPhone}
+                    onChange={(e) => setLeadCompanyPhone(e.target.value)}
+                    className="bg-slate-950 border-slate-800 focus-visible:ring-orange-500 text-sm"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="whatsapp" className="text-slate-300 text-xs font-semibold">WhatsApp Number (optional)</Label>
+                  <Input
+                    id="whatsapp"
+                    value={leadWhatsapp}
+                    onChange={(e) => setLeadWhatsapp(e.target.value)}
+                    className="bg-slate-950 border-slate-800 focus-visible:ring-orange-500 text-sm"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="companyEmail" className="text-slate-300 text-xs font-semibold">Email</Label>
+                  <Input
+                    id="companyEmail"
+                    value={leadCompanyEmail}
+                    onChange={(e) => setLeadCompanyEmail(e.target.value)}
+                    className="bg-slate-950 border-slate-800 focus-visible:ring-orange-500 text-sm"
+                  />
+                </div>
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="lastName" className="text-slate-300 text-xs font-semibold">Last Name</Label>
-                <Input
-                  id="lastName"
-                  value={leadLastName}
-                  onChange={(e) => setLeadLastName(e.target.value)}
-                  className="bg-slate-950 border-slate-800 focus-visible:ring-orange-500 text-sm"
+                <Label htmlFor="address" className="text-slate-300 text-xs font-semibold">Address</Label>
+                <Textarea
+                  id="address"
+                  value={leadAddress}
+                  onChange={(e) => setLeadAddress(e.target.value)}
+                  className="bg-slate-950 border-slate-800 text-sm min-h-[60px] text-white"
                 />
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="space-y-1.5">
+                  <Label htmlFor="industry" className="text-slate-300 text-xs font-semibold">Industry</Label>
+                  <Input
+                    id="industry"
+                    value={leadIndustry}
+                    onChange={(e) => setLeadIndustry(e.target.value)}
+                    className="bg-slate-950 border-slate-800 focus-visible:ring-orange-500 text-sm"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="companyWebsite" className="text-slate-300 text-xs font-semibold">Company Website</Label>
+                  <Input
+                    id="companyWebsite"
+                    value={leadCompanyWebsite}
+                    onChange={(e) => setLeadCompanyWebsite(e.target.value)}
+                    className="bg-slate-950 border-slate-800 focus-visible:ring-orange-500 text-sm"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="companySize" className="text-slate-300 text-xs font-semibold">Company Size</Label>
+                  <select
+                    id="companySize"
+                    value={leadCompanySize}
+                    onChange={(e) => setLeadCompanySize(e.target.value)}
+                    className="w-full bg-slate-950 border border-slate-800 text-slate-300 rounded p-2 text-sm focus:ring-1 focus:ring-orange-500 focus:outline-none"
+                  >
+                    <option value="1-10">1-10</option>
+                    <option value="11-50">11-50</option>
+                    <option value="51-200">51-200</option>
+                    <option value="201-1000">201-1000</option>
+                    <option value="1000+">1000+</option>
+                  </select>
+                </div>
               </div>
             </div>
 
-            {/* 2. Contact details */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-1.5">
-                <Label htmlFor="email" className="text-slate-300 text-xs font-semibold">Email Address *</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  value={leadEmail}
-                  onChange={(e) => setLeadEmail(e.target.value)}
-                  className="bg-slate-950 border-slate-800 focus-visible:ring-orange-500 text-sm"
-                  required
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="phone" className="text-slate-300 text-xs font-semibold">Phone Number</Label>
-                <Input
-                  id="phone"
-                  value={leadPhone}
-                  onChange={(e) => setLeadPhone(e.target.value)}
-                  className="bg-slate-950 border-slate-800 focus-visible:ring-orange-500 text-sm"
-                  placeholder="+8801700000000"
-                />
-              </div>
-            </div>
-
-            {/* 3. Social Handles */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-1.5">
-                <Label htmlFor="linkedin" className="text-slate-300 text-xs font-semibold">LinkedIn Profile URL</Label>
-                <Input
-                  id="linkedin"
-                  value={leadLinkedin}
-                  onChange={(e) => setLeadLinkedin(e.target.value)}
-                  className="bg-slate-950 border-slate-800 focus-visible:ring-orange-500 text-sm"
-                  placeholder="https://linkedin.com/in/username"
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="skype" className="text-slate-300 text-xs font-semibold">Skype ID</Label>
-                <Input
-                  id="skype"
-                  value={leadSkype}
-                  onChange={(e) => setLeadSkype(e.target.value)}
-                  className="bg-slate-950 border-slate-800 focus-visible:ring-orange-500 text-sm"
-                />
+            {/* 2. Contact Person Information */}
+            <div className="space-y-4">
+              <h3 className="text-sm font-bold text-orange-500 border-b border-slate-800 pb-1">2. Contact Person Information</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <Label htmlFor="firstName" className="text-slate-300 text-xs font-semibold">Name</Label>
+                  <Input
+                    id="firstName"
+                    value={leadFirstName}
+                    onChange={(e) => setLeadFirstName(e.target.value)}
+                    className="bg-slate-950 border-slate-800 focus-visible:ring-orange-500 text-sm"
+                    placeholder="Full Name"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="jobTitle" className="text-slate-300 text-xs font-semibold">Job Title</Label>
+                  <Input
+                    id="jobTitle"
+                    value={leadJobTitle}
+                    onChange={(e) => setLeadJobTitle(e.target.value)}
+                    className="bg-slate-950 border-slate-800 focus-visible:ring-orange-500 text-sm"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="phone" className="text-slate-300 text-xs font-semibold">Phone</Label>
+                  <Input
+                    id="phone"
+                    value={leadPhone}
+                    onChange={(e) => setLeadPhone(e.target.value)}
+                    className="bg-slate-950 border-slate-800 focus-visible:ring-orange-500 text-sm"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="email" className="text-slate-300 text-xs font-semibold">Email</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    value={leadEmail}
+                    onChange={(e) => setLeadEmail(e.target.value)}
+                    className="bg-slate-950 border-slate-800 focus-visible:ring-orange-500 text-sm"
+                  />
+                </div>
               </div>
             </div>
 
-            {/* 4. Company Info */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="space-y-1.5">
-                <Label htmlFor="companyName" className="text-slate-300 text-xs font-semibold">Company Name</Label>
-                <Input
-                  id="companyName"
-                  value={leadCompanyName}
-                  onChange={(e) => setLeadCompanyName(e.target.value)}
-                  className="bg-slate-950 border-slate-800 focus-visible:ring-orange-500 text-sm"
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="companyWebsite" className="text-slate-300 text-xs font-semibold">Company Website</Label>
-                <Input
-                  id="companyWebsite"
-                  value={leadCompanyWebsite}
-                  onChange={(e) => setLeadCompanyWebsite(e.target.value)}
-                  className="bg-slate-950 border-slate-800 focus-visible:ring-orange-500 text-sm"
-                  placeholder="https://company.com"
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="companySize" className="text-slate-300 text-xs font-semibold">Company Size</Label>
-                <select
-                  id="companySize"
-                  value={leadCompanySize}
-                  onChange={(e) => setLeadCompanySize(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 text-slate-300 rounded p-2 text-sm focus:ring-1 focus:ring-orange-500 focus:outline-none"
-                >
-                  <option value="1-10">1-10 employees</option>
-                  <option value="11-50">11-50 employees</option>
-                  <option value="51-200">51-200 employees</option>
-                  <option value="200+">200+ employees</option>
-                </select>
+            {/* 3. Lead Information */}
+            <div className="space-y-4">
+              <h3 className="text-sm font-bold text-orange-500 border-b border-slate-800 pb-1">3. Lead Information</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <Label htmlFor="leadSource" className="text-slate-300 text-xs font-semibold">Lead Source</Label>
+                  <select
+                    id="leadSource"
+                    value={leadSource}
+                    onChange={(e) => setLeadSource(e.target.value)}
+                    className="w-full bg-slate-950 border border-slate-800 text-slate-300 rounded p-2 text-sm focus:ring-1 focus:ring-orange-500 focus:outline-none"
+                  >
+                    <option value="Physical Visit">Physical Visit</option>
+                    <option value="Referral">Referral</option>
+                    <option value="Website">Website</option>
+                    <option value="Social Media">Social Media</option>
+                    <option value="Google Search">Google Search</option>
+                    <option value="Cold Email">Cold Email</option>
+                    <option value="Cold Call">Cold Call</option>
+                    <option value="Existing Client">Existing Client</option>
+                    <option value="Event">Event</option>
+                    <option value="Other">Other</option>
+                  </select>
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="leadStatus" className="text-slate-300 text-xs font-semibold">Lead Status</Label>
+                  <select
+                    id="leadStatus"
+                    value={leadStatus}
+                    onChange={(e) => setLeadStatus(e.target.value)}
+                    className="w-full bg-slate-950 border border-slate-800 text-slate-300 rounded p-2 text-sm focus:ring-1 focus:ring-orange-500 focus:outline-none"
+                  >
+                    <option value="New Lead">New Lead</option>
+                    <option value="Contacted">Contacted</option>
+                    <option value="Meeting Scheduled">Meeting Scheduled</option>
+                    <option value="Demo Completed">Demo Completed</option>
+                    <option value="Proposal Sent">Proposal Sent</option>
+                    <option value="Negotiation">Negotiation</option>
+                    <option value="Won">Won</option>
+                    <option value="Lost">Lost</option>
+                    <option value="Follow-up">Follow-up</option>
+                  </select>
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="priority" className="text-slate-300 text-xs font-semibold">Priority</Label>
+                  <select
+                    id="priority"
+                    value={leadPriority}
+                    onChange={(e) => setLeadPriority(e.target.value)}
+                    className="w-full bg-slate-950 border border-slate-800 text-slate-300 rounded p-2 text-sm focus:ring-1 focus:ring-orange-500 focus:outline-none"
+                  >
+                    <option value="High">High</option>
+                    <option value="Medium">Medium</option>
+                    <option value="Low">Low</option>
+                  </select>
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="leadOwner" className="text-slate-300 text-xs font-semibold">Lead Owner</Label>
+                  <select
+                    id="leadOwner"
+                    value={leadOwnerId}
+                    onChange={(e) => setLeadOwnerId(e.target.value)}
+                    className="w-full bg-slate-950 border border-slate-800 text-slate-300 rounded p-2 text-sm focus:ring-1 focus:ring-orange-500 focus:outline-none"
+                  >
+                    <option value={user?.id || ""}>{user?.name || "Self"}</option>
+                    {employees.map((emp) => (
+                      <option key={emp.id} value={emp.id}>
+                        {emp.firstName} {emp.lastName}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="space-y-1.5 flex flex-col">
+                  <Label htmlFor="dateAdded" className="text-slate-300 text-xs font-semibold">Date Added</Label>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className={`w-full justify-start text-left font-normal bg-slate-950 border-slate-800 text-sm hover:bg-slate-900 hover:text-slate-300 ${!leadDateAdded ? "text-slate-500" : "text-slate-300"}`}
+                      >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {leadDateAdded ? format(new Date(leadDateAdded), "PPP") : <span>Pick a date</span>}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0 bg-slate-950 border-slate-800" align="start">
+                      <CalendarComponent
+                        mode="single"
+                        selected={leadDateAdded ? new Date(leadDateAdded) : undefined}
+                        onSelect={(date) => {
+                          if (date) {
+                            // Adjust for timezone offset so we get the correct local day string
+                            const offsetDate = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
+                            setLeadDateAdded(offsetDate.toISOString().split('T')[0]);
+                          }
+                        }}
+                        initialFocus
+                        className="text-slate-300 bg-slate-950"
+                      />
+                    </PopoverContent>
+                  </Popover>
+                </div>
               </div>
             </div>
 
-            {/* 5. Geographic Info & Source */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {/* 4. Project Information */}
+            <div className="space-y-4">
+              <h3 className="text-sm font-bold text-orange-500 border-b border-slate-800 pb-1">4. Project Information</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <Label htmlFor="projectTitle" className="text-slate-300 text-xs font-semibold">Project Title</Label>
+                  <Input
+                    id="projectTitle"
+                    value={leadProjectTitle}
+                    onChange={(e) => setLeadProjectTitle(e.target.value)}
+                    className="bg-slate-950 border-slate-800 text-sm"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="projectType" className="text-slate-300 text-xs font-semibold">Project Type</Label>
+                  <Input
+                    id="projectType"
+                    value={leadProjectType}
+                    onChange={(e) => setLeadProjectType(e.target.value)}
+                    className="bg-slate-950 border-slate-800 text-sm"
+                  />
+                </div>
+              </div>
               <div className="space-y-1.5">
-                <Label htmlFor="country" className="text-slate-300 text-xs font-semibold">Country</Label>
+                <Label htmlFor="projectSummary" className="text-slate-300 text-xs font-semibold">Project Summary</Label>
+                <Textarea
+                  id="projectSummary"
+                  value={leadProjectSummary}
+                  onChange={(e) => setLeadProjectSummary(e.target.value)}
+                  className="bg-slate-950 border-slate-800 text-sm min-h-[60px] text-white"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="requirements" className="text-slate-300 text-xs font-semibold">Detailed Requirements</Label>
+                <Textarea
+                  id="requirements"
+                  value={leadRequirements}
+                  onChange={(e) => setLeadRequirements(e.target.value)}
+                  className="bg-slate-950 border-slate-800 text-sm min-h-[80px] text-white"
+                />
+              </div>
+              <div className="space-y-1.5 w-1/2 pr-2">
+                <Label htmlFor="expectedUsers" className="text-slate-300 text-xs font-semibold">Number of Users (Expected)</Label>
                 <Input
-                  id="country"
-                  value={leadCountry}
-                  onChange={(e) => setLeadCountry(e.target.value)}
+                  id="expectedUsers"
+                  value={leadExpectedUsers}
+                  onChange={(e) => setLeadExpectedUsers(e.target.value)}
                   className="bg-slate-950 border-slate-800 text-sm"
                 />
               </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="timezone" className="text-slate-300 text-xs font-semibold">Timezone</Label>
-                <Input
-                  id="timezone"
-                  value={leadTimezone}
-                  onChange={(e) => setLeadTimezone(e.target.value)}
-                  className="bg-slate-950 border-slate-800 text-sm"
-                  placeholder="America/New_York"
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="leadSource" className="text-slate-300 text-xs font-semibold">Lead Source *</Label>
-                <select
-                  id="leadSource"
-                  value={leadSource}
-                  onChange={(e) => setLeadSource(e.target.value)}
-                  className="w-full bg-slate-950 border border-slate-800 text-slate-300 rounded p-2 text-sm focus:ring-1 focus:ring-orange-500 focus:outline-none"
-                >
-                  <option value="LinkedIn">LinkedIn</option>
-                  <option value="Upwork">Upwork</option>
-                  <option value="Website">Website</option>
-                  <option value="Cold Email">Cold Email</option>
-                  <option value="Referral">Referral</option>
-                  <option value="Other">Other</option>
-                </select>
-              </div>
             </div>
-
-            {/* 6. Project & Budget */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="md:col-span-2 space-y-1.5">
-                <Label htmlFor="projectTitle" className="text-slate-300 text-xs font-semibold">Project Title *</Label>
-                <Input
-                  id="projectTitle"
-                  value={leadProjectTitle}
-                  onChange={(e) => setLeadProjectTitle(e.target.value)}
-                  className="bg-slate-950 border-slate-800 text-sm"
-                  placeholder="SaaS Web App, Mobile App, etc."
-                  required
-                />
-              </div>
-              <div className="grid grid-cols-3 gap-2">
-                <div className="col-span-2 space-y-1.5">
-                  <Label htmlFor="budget" className="text-slate-300 text-xs font-semibold">Budget</Label>
+            {/* 5. Budget & Timeline */}
+            <div className="space-y-4">
+              <h3 className="text-sm font-bold text-orange-500 border-b border-slate-800 pb-1">5. Budget & Timeline</h3>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="space-y-1.5">
+                  <Label htmlFor="budget" className="text-slate-300 text-xs font-semibold">Estimated Budget</Label>
                   <Input
                     id="budget"
                     type="number"
@@ -1252,25 +1813,112 @@ export const EmployeeDashboard: React.FC = () => {
                     onChange={(e) => setLeadCurrency(e.target.value)}
                     className="w-full bg-slate-950 border border-slate-800 text-slate-300 rounded p-2 text-sm focus:ring-1 focus:ring-orange-500 focus:outline-none"
                   >
-                    <option value="USD">USD</option>
-                    <option value="EUR">EUR</option>
-                    <option value="GBP">GBP</option>
-                    <option value="BDT">BDT</option>
+                    <option value="BDT">BDT (৳)</option>
+                    <option value="USD">USD ($)</option>
+                    <option value="EUR">EUR (€)</option>
+                    <option value="GBP">GBP (£)</option>
+                    <option value="AUD">AUD (A$)</option>
                   </select>
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="budgetRange" className="text-slate-300 text-xs font-semibold">Budget Range</Label>
+                  <Input
+                    id="budgetRange"
+                    value={leadBudgetRange}
+                    onChange={(e) => setLeadBudgetRange(e.target.value)}
+                    className="bg-slate-950 border-slate-800 text-sm"
+                    placeholder="e.g. $5k - $10k"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <Label htmlFor="expectedStartDate" className="text-slate-300 text-xs font-semibold">Expected Start Date</Label>
+                  <Input
+                    id="expectedStartDate"
+                    type="date"
+                    value={leadExpectedStartDate}
+                    onChange={(e) => setLeadExpectedStartDate(e.target.value)}
+                    className="bg-slate-950 border-slate-800 text-sm"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label htmlFor="expectedDeliveryTimeline" className="text-slate-300 text-xs font-semibold">Expected Delivery Timeline</Label>
+                  <Input
+                    id="expectedDeliveryTimeline"
+                    value={leadExpectedDeliveryTimeline}
+                    onChange={(e) => setLeadExpectedDeliveryTimeline(e.target.value)}
+                    className="bg-slate-950 border-slate-800 text-sm"
+                    placeholder="e.g. 3 months"
+                  />
                 </div>
               </div>
             </div>
 
-            {/* 7. Requirements details */}
-            <div className="space-y-1.5">
-              <Label htmlFor="requirements" className="text-slate-300 text-xs font-semibold">Requirements Description</Label>
-              <Textarea
-                id="requirements"
-                value={leadRequirements}
-                onChange={(e) => setLeadRequirements(e.target.value)}
-                className="bg-slate-950 border-slate-800 text-sm min-h-[100px] text-white"
-                placeholder="Detail client expectations, technologies, or notes..."
-              />
+            {/* 6. Attachments */}
+            <div className="space-y-4">
+              <h3 className="text-sm font-bold text-orange-500 border-b border-slate-800 pb-1">6. Attachments</h3>
+              <div className="space-y-1.5">
+                <Input
+                  id="attachments"
+                  type="file"
+                  multiple
+                  onChange={async (e) => {
+                    const files = Array.from(e.target.files || []);
+                    if (files.length === 0) return;
+                    
+                    // Show a quick loading state if we had a dedicated state, for now we just upload
+                    const newUrls: string[] = [];
+                    for (const file of files) {
+                      const formData = new FormData();
+                      formData.append("file", file);
+                      try {
+                        const res = await fetchAPI<{ url: string }>("/leads/upload", {
+                          method: "POST",
+                          body: formData,
+                        });
+                        if (res.url) {
+                          newUrls.push(res.url);
+                        }
+                      } catch (err) {
+                        console.error("Upload failed for", file.name, err);
+                      }
+                    }
+                    
+                    if (newUrls.length > 0) {
+                      setLeadAttachments(prev => prev ? prev + ', ' + newUrls.join(', ') : newUrls.join(', '));
+                    }
+                  }}
+                  className="bg-slate-950 border-slate-800 text-sm text-slate-300 file:bg-slate-800 file:text-slate-300 file:border-0 file:rounded-md file:px-2 file:py-1 file:mr-2 cursor-pointer"
+                />
+                {leadAttachments && (
+                  <div className="text-xs text-slate-400 mt-2 space-y-1">
+                    <p className="font-semibold text-slate-300">Uploaded Files:</p>
+                    {leadAttachments.split(',').map((url, idx) => (
+                      <p key={idx} className="break-all">
+                        <a href={`${import.meta.env.VITE_API_URL || 'https://api.gknetsolutions.co.uk/api'}`.replace('/api', '') + url.trim()} target="_blank" rel="noreferrer" className="text-blue-400 hover:underline">
+                          {url.trim().split('/').pop()}
+                        </a>
+                      </p>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* 7. Notes */}
+            <div className="space-y-4">
+              <h3 className="text-sm font-bold text-orange-500 border-b border-slate-800 pb-1">7. Notes</h3>
+              <div className="space-y-1.5">
+                <Textarea
+                  id="notes"
+                  value={leadNotes}
+                  onChange={(e) => setLeadNotes(e.target.value)}
+                  className="bg-slate-950 border-slate-800 text-sm min-h-[80px] text-white"
+                  placeholder="Additional notes about the prospect..."
+                />
+              </div>
             </div>
 
             <DialogFooter className="pt-4 border-t border-slate-800">
@@ -1288,9 +1936,9 @@ export const EmployeeDashboard: React.FC = () => {
               <Button
                 type="submit"
                 className="bg-gradient-to-r from-orange-500 to-amber-500 text-white hover:from-orange-600 hover:to-amber-600 rounded-xl px-5"
-                disabled={createLeadMutation.isPending}
+                disabled={createLeadMutation.isPending || updateLeadMutation.isPending}
               >
-                {createLeadMutation.isPending ? "Creating..." : "Create Lead"}
+                {editingLeadId ? (updateLeadMutation.isPending ? "Updating..." : "Update Lead") : (createLeadMutation.isPending ? "Creating..." : "Create Lead")}
               </Button>
             </DialogFooter>
           </form>
@@ -1323,6 +1971,14 @@ export const EmployeeDashboard: React.FC = () => {
                   <Badge className="bg-orange-500/10 text-orange-400 border border-orange-500/25 px-2.5 py-0.5 text-xs font-semibold capitalize">
                     {leadDetails.status}
                   </Badge>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleEditClick(leadDetails)}
+                    className="h-7 text-xs bg-slate-900 border-slate-700 hover:bg-slate-800 text-slate-300 ml-2"
+                  >
+                    <Edit className="w-3.5 h-3.5 mr-1.5" /> Edit
+                  </Button>
                 </div>
               </div>
 
@@ -1475,7 +2131,7 @@ export const EmployeeDashboard: React.FC = () => {
                             if (type.includes("Created")) return <Plus className="w-3.5 h-3.5 text-emerald-400" />;
                             if (type.includes("Assigned")) return <UserCheck className="w-3.5 h-3.5 text-purple-400" />;
                             if (type.includes("Budget")) return <DollarSign className="w-3.5 h-3.5 text-amber-400" />;
-                            if (type.includes("Meeting") || type.includes("Calendar")) return <Calendar className="w-3.5 h-3.5 text-indigo-400" />;
+                            if (type.includes("Meeting") || type.includes("Calendar")) return <CalendarIcon className="w-3.5 h-3.5 text-indigo-400" />;
                             return <MessageSquare className="w-3.5 h-3.5 text-slate-400" />;
                           };
 
@@ -1585,7 +2241,7 @@ export const EmployeeDashboard: React.FC = () => {
                       variant="outline"
                       className="w-full border-slate-800 hover:bg-slate-900 text-white text-xs h-9 rounded-xl flex items-center justify-center gap-1.5"
                     >
-                      <Calendar className="w-3.5 h-3.5" />
+                      <CalendarIcon className="w-3.5 h-3.5" />
                       Schedule Meeting/Call
                     </Button>
                   ) : null}

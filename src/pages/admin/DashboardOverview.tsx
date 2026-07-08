@@ -265,14 +265,13 @@ export const DashboardOverview: React.FC = () => {
   const FUNNEL_COLORS = {
     "New Lead": "#3b82f6",
     "Contacted": "#06b6d4",
-    "Qualified": "#6366f1",
     "Meeting Scheduled": "#a855f7",
     "Demo Completed": "#ec4899",
     "Proposal Sent": "#f59e0b",
     "Negotiation": "#14b8a6",
     "Won": "#10b981",
     "Lost": "#ef4444",
-    "Follow-up Later": "#64748b"
+    "Follow-up": "#64748b"
   };
 
   return (

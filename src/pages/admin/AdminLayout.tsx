@@ -224,8 +224,8 @@ export const AdminLayout: React.FC = () => {
               <DropdownMenuContent align="end" className="w-56 p-2 border-border/50">
                 <DropdownMenuLabel className="px-3 py-2 text-sm font-semibold">My Account</DropdownMenuLabel>
                 <DropdownMenuSeparator className="bg-border/50" />
-                <DropdownMenuItem className="rounded-lg cursor-pointer">Profile Settings</DropdownMenuItem>
-                <DropdownMenuItem className="rounded-lg cursor-pointer">Security Settings</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate('/admin/profile')} className="rounded-lg cursor-pointer">Profile Settings</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate('/admin/profile?tab=security')} className="rounded-lg cursor-pointer">Security Settings</DropdownMenuItem>
                 <DropdownMenuSeparator className="bg-border/50" />
                 <DropdownMenuItem 
                   className="text-destructive focus:bg-destructive/10 focus:text-destructive rounded-lg cursor-pointer"

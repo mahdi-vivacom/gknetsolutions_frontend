@@ -4,6 +4,15 @@ import { fetchAPI } from "@/lib/api";
 import { useAuth } from "../../context/AuthContext";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { 
+  DropdownMenu, 
+  DropdownMenuContent, 
+  DropdownMenuItem, 
+  DropdownMenuLabel, 
+  DropdownMenuSeparator, 
+  DropdownMenuTrigger 
+} from "@/components/ui/dropdown-menu";
+import { ProfileSettings } from "../shared/ProfileSettings";
+import { 
   Briefcase, 
   DollarSign, 
   Calendar,
@@ -19,7 +28,8 @@ import {
   TrendingUp,
   Receipt,
   ArrowRight,
-  ExternalLink
+  ExternalLink,
+  ChevronDown
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -29,6 +39,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { toast } from "sonner";
+
 
 interface ActiveService {
   id: string;
@@ -90,6 +101,7 @@ export const ClientDashboard: React.FC = () => {
   const queryClient = useQueryClient();
   const [page, setPage] = useState(1);
   const [isProcessingConfirm, setIsProcessingConfirm] = useState(false);
+  const [currentTab, setCurrentTab] = useState<"dashboard" | "profile">("dashboard");
 
   // Redirect if unauthorized
   useEffect(() => {
@@ -191,7 +203,10 @@ export const ClientDashboard: React.FC = () => {
 
       {/* Header Navigation */}
       <header className="h-20 bg-card/85 backdrop-blur-md border-b border-border sticky top-0 z-30 flex items-center justify-between px-6 lg:px-8">
-        <div className="flex items-center space-x-3">
+        <div 
+          className="flex items-center space-x-3 cursor-pointer hover:opacity-80 transition-opacity"
+          onClick={() => setCurrentTab('dashboard')}
+        >
           <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-orange-500 to-amber-500 flex items-center justify-center text-white font-black text-lg shadow-md shadow-orange-500/20">
             GK
           </div>
@@ -203,25 +218,44 @@ export const ClientDashboard: React.FC = () => {
 
         <div className="flex items-center space-x-4">
           <ThemeToggle />
-          <div className="flex items-center space-x-2.5 p-1 px-3 bg-muted/60 rounded-xl border border-border/80">
-            <div className="w-7 h-7 rounded-lg bg-orange-500/10 text-orange-500 dark:text-orange-400 flex items-center justify-center font-bold text-xs">
-              {user.firstName[0] + (user.lastName?.[0] || "")}
-            </div>
-            <div className="hidden sm:block text-left">
-              <div className="text-xs font-semibold text-foreground/90">{user.firstName} {user.lastName}</div>
-              <span className="text-[9px] text-muted-foreground font-bold capitalize">{user.role} Account</span>
-            </div>
-          </div>
-          <Button variant="ghost" size="icon" onClick={handleLogout} className="text-rose-500 hover:bg-rose-500/10 hover:text-rose-450 rounded-xl">
-            <LogOut className="w-5 h-5" />
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button className="flex items-center space-x-2.5 p-1 px-3 bg-muted/60 rounded-xl border border-border/80 hover:bg-muted transition-all">
+                <div className="w-7 h-7 rounded-lg bg-orange-500/10 text-orange-500 dark:text-orange-400 flex items-center justify-center font-bold text-xs">
+                  {(user.firstName[0] || "") + (user.lastName?.[0] || "")}
+                </div>
+                <div className="hidden sm:block text-left">
+                  <div className="text-xs font-semibold text-foreground/90">{user.firstName} {user.lastName || ""}</div>
+                  <span className="text-[9px] text-muted-foreground font-bold capitalize">{user.role} Account</span>
+                </div>
+                <ChevronDown className="w-4 h-4 text-muted-foreground ml-1" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56 p-2 border-border/50">
+              <DropdownMenuLabel className="px-3 py-2 text-sm font-semibold">My Account</DropdownMenuLabel>
+              <DropdownMenuSeparator className="bg-border/50" />
+              <DropdownMenuItem onClick={() => { setCurrentTab('profile'); setSearchParams({}); }} className="rounded-lg cursor-pointer">Profile Settings</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => { setCurrentTab('profile'); setSearchParams({ tab: 'security' }); }} className="rounded-lg cursor-pointer">Security Settings</DropdownMenuItem>
+              <DropdownMenuSeparator className="bg-border/50" />
+              <DropdownMenuItem 
+                className="text-destructive focus:bg-destructive/10 focus:text-destructive rounded-lg cursor-pointer"
+                onClick={handleLogout}
+              >
+                Logout
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </header>
 
       {/* Main Content Dashboard */}
       <main className="px-6 py-8 lg:px-8 max-w-7xl mx-auto space-y-8 relative z-10">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          <div>
+        {currentTab === 'profile' ? (
+          <ProfileSettings />
+        ) : (
+          <>
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+              <div>
             <h2 className="text-2xl font-black text-foreground tracking-tight">Billing & Service Console</h2>
             <p className="text-xs text-muted-foreground mt-1">Review active integrations, pay outstanding invoices via Stripe, and download statements</p>
           </div>
@@ -544,6 +578,8 @@ export const ClientDashboard: React.FC = () => {
             </Card>
           </div>
         </div>
+          </>
+        )}
       </main>
     </div>
   );

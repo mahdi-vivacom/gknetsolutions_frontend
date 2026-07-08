@@ -4,7 +4,7 @@ export async function fetchAPI<T>(path: string, options?: RequestInit): Promise<
   const url = `${API_BASE_URL.replace(/\/$/, '')}/${path.replace(/^\//, '')}`;
 
   const headers = new Headers(options?.headers);
-  if (options?.body && !headers.has('Content-Type')) {
+  if (options?.body && !headers.has('Content-Type') && !(options.body instanceof FormData)) {
     headers.set('Content-Type', 'application/json');
   }
 

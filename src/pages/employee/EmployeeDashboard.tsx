@@ -234,7 +234,7 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({ value, onChange, id }) 
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-auto p-0 bg-card border-border text-foreground" align="start">
-          <CalendarUI
+          <CalendarComponent
             mode="single"
             selected={selectedDate}
             onSelect={handleDateSelect}

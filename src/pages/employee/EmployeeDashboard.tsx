@@ -227,19 +227,19 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({ value, onChange, id }) 
           <Button
             type="button"
             variant="outline"
-            className="flex-1 justify-start text-left font-normal bg-slate-950 border-slate-850 text-white text-xs h-9 hover:bg-slate-900"
+            className="flex-1 justify-start text-left font-normal bg-background border-border text-foreground text-xs h-9 hover:bg-card"
           >
-            <CalendarIcon className="mr-2 h-3.5 w-3.5 text-slate-400" />
-            {selectedDate && !isNaN(selectedDate.getTime()) ? format(selectedDate, "PPP") : <span className="text-slate-500">Pick a date</span>}
+            <CalendarIcon className="mr-2 h-3.5 w-3.5 text-muted-foreground" />
+            {selectedDate && !isNaN(selectedDate.getTime()) ? format(selectedDate, "PPP") : <span className="text-muted-foreground">Pick a date</span>}
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-auto p-0 bg-slate-900 border-slate-800 text-white" align="start">
+        <PopoverContent className="w-auto p-0 bg-card border-border text-foreground" align="start">
           <CalendarUI
             mode="single"
             selected={selectedDate}
             onSelect={handleDateSelect}
             initialFocus
-            className="bg-slate-900 text-white"
+            className="bg-card text-foreground"
           />
         </PopoverContent>
       </Popover>
@@ -247,7 +247,7 @@ const DateTimePicker: React.FC<DateTimePickerProps> = ({ value, onChange, id }) 
       <select
         value={selectedTime}
         onChange={(e) => handleTimeSelect(e.target.value)}
-        className="w-28 bg-slate-950 border border-slate-850 text-white text-xs rounded p-2 focus:ring-1 focus:ring-orange-500 focus:outline-none"
+        className="w-28 bg-background border border-border text-foreground text-xs rounded p-2 focus:ring-1 focus:ring-orange-500 focus:outline-none"
       >
         {timeSlots.map((slot) => (
           <option key={slot} value={slot}>
@@ -500,10 +500,10 @@ export const EmployeeDashboard: React.FC = () => {
 
   if (loadingAuth || !user) {
     return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center font-sans">
+      <div className="min-h-screen bg-background flex items-center justify-center font-sans">
         <div className="flex flex-col items-center space-y-4">
           <div className="w-12 h-12 border-4 border-orange-500 border-t-transparent rounded-full animate-spin" />
-          <p className="text-slate-400 text-sm font-medium">Validating employee session...</p>
+          <p className="text-muted-foreground text-sm font-medium">Validating employee session...</p>
         </div>
       </div>
     );
@@ -999,7 +999,7 @@ export const EmployeeDashboard: React.FC = () => {
                   <span className="text-[10px] uppercase font-bold text-muted-foreground block">Monthly Target</span>
                   <span className="text-xl font-bold block text-foreground">${currentWins.toLocaleString()}</span>
                   <span className="text-[10px] text-muted-foreground">
-                    of <span className="font-semibold text-slate-400">${target.toLocaleString()}</span> target
+                    of <span className="font-semibold text-muted-foreground">${target.toLocaleString()}</span> target
                   </span>
                 </div>
               </Card>
@@ -1049,7 +1049,7 @@ export const EmployeeDashboard: React.FC = () => {
 
             {/* PIPELINE VIEW */}
             {currentTab === "pipeline" && (
-              <div className="space-y-4 min-h-[80vh]">
+              <div className="space-y-4 min-h-[70vh]">
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
                   <div className="flex items-center gap-2">
                     <h3 className="text-lg font-bold text-foreground shrink-0">My Active Funnel</h3>
@@ -1281,7 +1281,7 @@ export const EmployeeDashboard: React.FC = () => {
                         </div>
 
                         {/* Cards Container */}
-                        <div className={`flex-1 overflow-y-auto pr-0.5 ${isExpanded ? 'max-h-[750px]' : 'max-h-[600px]'}`}>
+                        <div className={`flex-1 overflow-y-auto pr-0.5 ${isExpanded ? 'max-h-[85vh]' : 'max-h-[70vh]'}`}>
                           {loadingLeads ? (
                             <div className="space-y-3">
                               <Skeleton className="h-24 w-full rounded-xl" />
@@ -1391,14 +1391,14 @@ export const EmployeeDashboard: React.FC = () => {
                           selectable={false}
                           eventContent={(eventInfo) => {
                             return (
-                              <div className="p-1.5 overflow-hidden text-[11px] text-white h-full flex flex-col justify-between">
+                              <div className="p-1.5 overflow-hidden text-[11px] text-foreground h-full flex flex-col justify-between">
                                 <div className="font-semibold leading-tight truncate">
                                   {eventInfo.event.title}
                                 </div>
                                 <div className="opacity-95 text-[9px] flex items-center justify-between mt-1">
                                   <span>{eventInfo.event.extendedProps.eventType}</span>
                                   {eventInfo.event.extendedProps.meetingLink && (
-                                    <Video className="w-3 h-3 text-white shrink-0 ml-1" />
+                                    <Video className="w-3 h-3 text-foreground shrink-0 ml-1" />
                                   )}
                                 </div>
                               </div>
@@ -1463,7 +1463,7 @@ export const EmployeeDashboard: React.FC = () => {
                                 <div>
                                   <h4 className="text-xs font-extrabold text-foreground line-clamp-1">{event.title}</h4>
                                   <div className="text-[10px] text-muted-foreground flex items-center mt-1">
-                                    <Clock className="w-3.5 h-3.5 mr-1 text-slate-400 shrink-0" />
+                                    <Clock className="w-3.5 h-3.5 mr-1 text-muted-foreground shrink-0" />
                                     <span>{startTimeStr} - {endTimeStr}</span>
                                   </div>
                                 </div>
@@ -1511,7 +1511,7 @@ export const EmployeeDashboard: React.FC = () => {
                         })
                       ) : (
                         <div className="h-48 border border-dashed border-border/40 rounded-2xl flex flex-col items-center justify-center text-[11px] text-muted-foreground italic text-center p-4">
-                          <AlertCircle className="w-6 h-6 text-slate-500 mb-2 shrink-0" />
+                          <AlertCircle className="w-6 h-6 text-muted-foreground mb-2 shrink-0" />
                           <span>No meetings or calls scheduled for this date. Click different slots to check schedule.</span>
                         </div>
                       )}
@@ -1532,13 +1532,13 @@ export const EmployeeDashboard: React.FC = () => {
           resetCreateForm();
         }
       }}>
-        <DialogContent className="max-w-7xl w-[95vw] bg-slate-900 border-slate-800 text-white rounded-2xl overflow-y-auto max-h-[95vh] p-6">
+        <DialogContent className="max-w-7xl w-[95vw] bg-card text-foreground rounded-2xl overflow-y-auto max-h-[95vh] p-6 border-border">
           <DialogHeader>
-            <DialogTitle className="text-lg font-bold text-white flex items-center gap-2">
+            <DialogTitle className="text-lg font-bold flex items-center gap-2 text-foreground">
               <PlusCircle className="w-5 h-5 text-orange-500" />
               {editingLeadId ? "Edit Lead Prospect" : "Add New Lead Prospect"}
             </DialogTitle>
-            <DialogDescription className="text-slate-400 text-xs">
+            <DialogDescription className="text-muted-foreground text-xs">
               {editingLeadId ? "Update the customer profile information, requirements, and budget details." : "Fill in customer profile information, initial project title, requirements, and budget details."}
             </DialogDescription>
           </DialogHeader>
@@ -1546,80 +1546,80 @@ export const EmployeeDashboard: React.FC = () => {
           <form onSubmit={handleCreateLead} className="space-y-6 py-4">
             {/* 1. Business Information */}
             <div className="space-y-4">
-              <h3 className="text-sm font-bold text-orange-500 border-b border-slate-800 pb-1">1. Business Information</h3>
+              <h3 className="text-sm font-bold text-orange-500 border-b border-border pb-1">1. Business Information</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
-                  <Label htmlFor="companyName" className="text-slate-300 text-xs font-semibold">Company Name</Label>
+                  <Label htmlFor="companyName" className="text-foreground text-xs font-semibold">Company Name</Label>
                   <Input
                     id="companyName"
                     value={leadCompanyName}
                     onChange={(e) => setLeadCompanyName(e.target.value)}
-                    className="bg-slate-950 border-slate-800 focus-visible:ring-orange-500 text-sm"
+                    className="bg-background border-border focus-visible:ring-orange-500 text-sm"
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <Label htmlFor="companyPhone" className="text-slate-300 text-xs font-semibold">Phone</Label>
+                  <Label htmlFor="companyPhone" className="text-foreground text-xs font-semibold">Phone</Label>
                   <Input
                     id="companyPhone"
                     value={leadCompanyPhone}
                     onChange={(e) => setLeadCompanyPhone(e.target.value)}
-                    className="bg-slate-950 border-slate-800 focus-visible:ring-orange-500 text-sm"
+                    className="bg-background border-border focus-visible:ring-orange-500 text-sm"
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <Label htmlFor="whatsapp" className="text-slate-300 text-xs font-semibold">WhatsApp Number (optional)</Label>
+                  <Label htmlFor="whatsapp" className="text-foreground text-xs font-semibold">WhatsApp Number (optional)</Label>
                   <Input
                     id="whatsapp"
                     value={leadWhatsapp}
                     onChange={(e) => setLeadWhatsapp(e.target.value)}
-                    className="bg-slate-950 border-slate-800 focus-visible:ring-orange-500 text-sm"
+                    className="bg-background border-border focus-visible:ring-orange-500 text-sm"
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <Label htmlFor="companyEmail" className="text-slate-300 text-xs font-semibold">Email</Label>
+                  <Label htmlFor="companyEmail" className="text-foreground text-xs font-semibold">Email</Label>
                   <Input
                     id="companyEmail"
                     value={leadCompanyEmail}
                     onChange={(e) => setLeadCompanyEmail(e.target.value)}
-                    className="bg-slate-950 border-slate-800 focus-visible:ring-orange-500 text-sm"
+                    className="bg-background border-border focus-visible:ring-orange-500 text-sm"
                   />
                 </div>
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="address" className="text-slate-300 text-xs font-semibold">Address</Label>
+                <Label htmlFor="address" className="text-foreground text-xs font-semibold">Address</Label>
                 <Textarea
                   id="address"
                   value={leadAddress}
                   onChange={(e) => setLeadAddress(e.target.value)}
-                  className="bg-slate-950 border-slate-800 text-sm min-h-[60px] text-white"
+                  className="bg-background border-border text-sm min-h-[60px] text-foreground"
                 />
               </div>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="space-y-1.5">
-                  <Label htmlFor="industry" className="text-slate-300 text-xs font-semibold">Industry</Label>
+                  <Label htmlFor="industry" className="text-foreground text-xs font-semibold">Industry</Label>
                   <Input
                     id="industry"
                     value={leadIndustry}
                     onChange={(e) => setLeadIndustry(e.target.value)}
-                    className="bg-slate-950 border-slate-800 focus-visible:ring-orange-500 text-sm"
+                    className="bg-background border-border focus-visible:ring-orange-500 text-sm"
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <Label htmlFor="companyWebsite" className="text-slate-300 text-xs font-semibold">Company Website</Label>
+                  <Label htmlFor="companyWebsite" className="text-foreground text-xs font-semibold">Company Website</Label>
                   <Input
                     id="companyWebsite"
                     value={leadCompanyWebsite}
                     onChange={(e) => setLeadCompanyWebsite(e.target.value)}
-                    className="bg-slate-950 border-slate-800 focus-visible:ring-orange-500 text-sm"
+                    className="bg-background border-border focus-visible:ring-orange-500 text-sm"
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <Label htmlFor="companySize" className="text-slate-300 text-xs font-semibold">Company Size</Label>
+                  <Label htmlFor="companySize" className="text-foreground text-xs font-semibold">Company Size</Label>
                   <select
                     id="companySize"
                     value={leadCompanySize}
                     onChange={(e) => setLeadCompanySize(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 text-slate-300 rounded p-2 text-sm focus:ring-1 focus:ring-orange-500 focus:outline-none"
+                    className="w-full bg-background border border-border text-foreground rounded p-2 text-sm focus:ring-1 focus:ring-orange-500 focus:outline-none"
                   >
                     <option value="1-10">1-10</option>
                     <option value="11-50">11-50</option>
@@ -1633,44 +1633,44 @@ export const EmployeeDashboard: React.FC = () => {
 
             {/* 2. Contact Person Information */}
             <div className="space-y-4">
-              <h3 className="text-sm font-bold text-orange-500 border-b border-slate-800 pb-1">2. Contact Person Information</h3>
+              <h3 className="text-sm font-bold text-orange-500 border-b border-border pb-1">2. Contact Person Information</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
-                  <Label htmlFor="firstName" className="text-slate-300 text-xs font-semibold">Name</Label>
+                  <Label htmlFor="firstName" className="text-foreground text-xs font-semibold">Name</Label>
                   <Input
                     id="firstName"
                     value={leadFirstName}
                     onChange={(e) => setLeadFirstName(e.target.value)}
-                    className="bg-slate-950 border-slate-800 focus-visible:ring-orange-500 text-sm"
+                    className="bg-background border-border focus-visible:ring-orange-500 text-sm"
                     placeholder="Full Name"
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <Label htmlFor="jobTitle" className="text-slate-300 text-xs font-semibold">Job Title</Label>
+                  <Label htmlFor="jobTitle" className="text-foreground text-xs font-semibold">Job Title</Label>
                   <Input
                     id="jobTitle"
                     value={leadJobTitle}
                     onChange={(e) => setLeadJobTitle(e.target.value)}
-                    className="bg-slate-950 border-slate-800 focus-visible:ring-orange-500 text-sm"
+                    className="bg-background border-border focus-visible:ring-orange-500 text-sm"
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <Label htmlFor="phone" className="text-slate-300 text-xs font-semibold">Phone</Label>
+                  <Label htmlFor="phone" className="text-foreground text-xs font-semibold">Phone</Label>
                   <Input
                     id="phone"
                     value={leadPhone}
                     onChange={(e) => setLeadPhone(e.target.value)}
-                    className="bg-slate-950 border-slate-800 focus-visible:ring-orange-500 text-sm"
+                    className="bg-background border-border focus-visible:ring-orange-500 text-sm"
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <Label htmlFor="email" className="text-slate-300 text-xs font-semibold">Email</Label>
+                  <Label htmlFor="email" className="text-foreground text-xs font-semibold">Email</Label>
                   <Input
                     id="email"
                     type="email"
                     value={leadEmail}
                     onChange={(e) => setLeadEmail(e.target.value)}
-                    className="bg-slate-950 border-slate-800 focus-visible:ring-orange-500 text-sm"
+                    className="bg-background border-border focus-visible:ring-orange-500 text-sm"
                   />
                 </div>
               </div>
@@ -1678,15 +1678,15 @@ export const EmployeeDashboard: React.FC = () => {
 
             {/* 3. Lead Information */}
             <div className="space-y-4">
-              <h3 className="text-sm font-bold text-orange-500 border-b border-slate-800 pb-1">3. Lead Information</h3>
+              <h3 className="text-sm font-bold text-orange-500 border-b border-border pb-1">3. Lead Information</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
-                  <Label htmlFor="leadSource" className="text-slate-300 text-xs font-semibold">Lead Source</Label>
+                  <Label htmlFor="leadSource" className="text-foreground text-xs font-semibold">Lead Source</Label>
                   <select
                     id="leadSource"
                     value={leadSource}
                     onChange={(e) => setLeadSource(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 text-slate-300 rounded p-2 text-sm focus:ring-1 focus:ring-orange-500 focus:outline-none"
+                    className="w-full bg-background border border-border text-foreground rounded p-2 text-sm focus:ring-1 focus:ring-orange-500 focus:outline-none"
                   >
                     <option value="Physical Visit">Physical Visit</option>
                     <option value="Referral">Referral</option>
@@ -1701,12 +1701,12 @@ export const EmployeeDashboard: React.FC = () => {
                   </select>
                 </div>
                 <div className="space-y-1.5">
-                  <Label htmlFor="leadStatus" className="text-slate-300 text-xs font-semibold">Lead Status</Label>
+                  <Label htmlFor="leadStatus" className="text-foreground text-xs font-semibold">Lead Status</Label>
                   <select
                     id="leadStatus"
                     value={leadStatus}
                     onChange={(e) => setLeadStatus(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 text-slate-300 rounded p-2 text-sm focus:ring-1 focus:ring-orange-500 focus:outline-none"
+                    className="w-full bg-background border border-border text-foreground rounded p-2 text-sm focus:ring-1 focus:ring-orange-500 focus:outline-none"
                   >
                     <option value="New Lead">New Lead</option>
                     <option value="Contacted">Contacted</option>
@@ -1720,12 +1720,12 @@ export const EmployeeDashboard: React.FC = () => {
                   </select>
                 </div>
                 <div className="space-y-1.5">
-                  <Label htmlFor="priority" className="text-slate-300 text-xs font-semibold">Priority</Label>
+                  <Label htmlFor="priority" className="text-foreground text-xs font-semibold">Priority</Label>
                   <select
                     id="priority"
                     value={leadPriority}
                     onChange={(e) => setLeadPriority(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 text-slate-300 rounded p-2 text-sm focus:ring-1 focus:ring-orange-500 focus:outline-none"
+                    className="w-full bg-background border border-border text-foreground rounded p-2 text-sm focus:ring-1 focus:ring-orange-500 focus:outline-none"
                   >
                     <option value="High">High</option>
                     <option value="Medium">Medium</option>
@@ -1733,12 +1733,12 @@ export const EmployeeDashboard: React.FC = () => {
                   </select>
                 </div>
                 <div className="space-y-1.5">
-                  <Label htmlFor="leadOwner" className="text-slate-300 text-xs font-semibold">Lead Owner</Label>
+                  <Label htmlFor="leadOwner" className="text-foreground text-xs font-semibold">Lead Owner</Label>
                   <select
                     id="leadOwner"
                     value={leadOwnerId}
                     onChange={(e) => setLeadOwnerId(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 text-slate-300 rounded p-2 text-sm focus:ring-1 focus:ring-orange-500 focus:outline-none"
+                    className="w-full bg-background border border-border text-foreground rounded p-2 text-sm focus:ring-1 focus:ring-orange-500 focus:outline-none"
                   >
                     <option value={user?.id || ""}>{user?.name || "Self"}</option>
                     {employees.map((emp) => (
@@ -1749,18 +1749,18 @@ export const EmployeeDashboard: React.FC = () => {
                   </select>
                 </div>
                 <div className="space-y-1.5 flex flex-col">
-                  <Label htmlFor="dateAdded" className="text-slate-300 text-xs font-semibold">Date Added</Label>
+                  <Label htmlFor="dateAdded" className="text-foreground text-xs font-semibold">Date Added</Label>
                   <Popover>
                     <PopoverTrigger asChild>
                       <Button
                         variant="outline"
-                        className={`w-full justify-start text-left font-normal bg-slate-950 border-slate-800 text-sm hover:bg-slate-900 hover:text-slate-300 ${!leadDateAdded ? "text-slate-500" : "text-slate-300"}`}
+                        className={`w-full justify-start text-left font-normal bg-background border-border text-sm hover:bg-card hover:text-foreground ${!leadDateAdded ? "text-muted-foreground" : "text-foreground"}`}
                       >
                         <CalendarIcon className="mr-2 h-4 w-4" />
                         {leadDateAdded ? format(new Date(leadDateAdded), "PPP") : <span>Pick a date</span>}
                       </Button>
                     </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0 bg-slate-950 border-slate-800" align="start">
+                    <PopoverContent className="w-auto p-0 bg-background border-border" align="start">
                       <CalendarComponent
                         mode="single"
                         selected={leadDateAdded ? new Date(leadDateAdded) : undefined}
@@ -1772,7 +1772,7 @@ export const EmployeeDashboard: React.FC = () => {
                           }
                         }}
                         initialFocus
-                        className="text-slate-300 bg-slate-950"
+                        className="text-foreground bg-background"
                       />
                     </PopoverContent>
                   </Popover>
@@ -1782,77 +1782,77 @@ export const EmployeeDashboard: React.FC = () => {
 
             {/* 4. Project Information */}
             <div className="space-y-4">
-              <h3 className="text-sm font-bold text-orange-500 border-b border-slate-800 pb-1">4. Project Information</h3>
+              <h3 className="text-sm font-bold text-orange-500 border-b border-border pb-1">4. Project Information</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
-                  <Label htmlFor="projectTitle" className="text-slate-300 text-xs font-semibold">Project Title</Label>
+                  <Label htmlFor="projectTitle" className="text-foreground text-xs font-semibold">Project Title</Label>
                   <Input
                     id="projectTitle"
                     value={leadProjectTitle}
                     onChange={(e) => setLeadProjectTitle(e.target.value)}
-                    className="bg-slate-950 border-slate-800 text-sm"
+                    className="bg-background border-border text-sm"
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <Label htmlFor="projectType" className="text-slate-300 text-xs font-semibold">Project Type</Label>
+                  <Label htmlFor="projectType" className="text-foreground text-xs font-semibold">Project Type</Label>
                   <Input
                     id="projectType"
                     value={leadProjectType}
                     onChange={(e) => setLeadProjectType(e.target.value)}
-                    className="bg-slate-950 border-slate-800 text-sm"
+                    className="bg-background border-border text-sm"
                   />
                 </div>
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="projectSummary" className="text-slate-300 text-xs font-semibold">Project Summary</Label>
+                <Label htmlFor="projectSummary" className="text-foreground text-xs font-semibold">Project Summary</Label>
                 <Textarea
                   id="projectSummary"
                   value={leadProjectSummary}
                   onChange={(e) => setLeadProjectSummary(e.target.value)}
-                  className="bg-slate-950 border-slate-800 text-sm min-h-[60px] text-white"
+                  className="bg-background border-border text-sm min-h-[60px] text-foreground"
                 />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="requirements" className="text-slate-300 text-xs font-semibold">Detailed Requirements</Label>
+                <Label htmlFor="requirements" className="text-foreground text-xs font-semibold">Detailed Requirements</Label>
                 <Textarea
                   id="requirements"
                   value={leadRequirements}
                   onChange={(e) => setLeadRequirements(e.target.value)}
-                  className="bg-slate-950 border-slate-800 text-sm min-h-[80px] text-white"
+                  className="bg-background border-border text-sm min-h-[80px] text-foreground"
                 />
               </div>
               <div className="space-y-1.5 w-1/2 pr-2">
-                <Label htmlFor="expectedUsers" className="text-slate-300 text-xs font-semibold">Number of Users (Expected)</Label>
+                <Label htmlFor="expectedUsers" className="text-foreground text-xs font-semibold">Number of Users (Expected)</Label>
                 <Input
                   id="expectedUsers"
                   value={leadExpectedUsers}
                   onChange={(e) => setLeadExpectedUsers(e.target.value)}
-                  className="bg-slate-950 border-slate-800 text-sm"
+                  className="bg-background border-border text-sm"
                 />
               </div>
             </div>
             {/* 5. Budget & Timeline */}
             <div className="space-y-4">
-              <h3 className="text-sm font-bold text-orange-500 border-b border-slate-800 pb-1">5. Budget & Timeline</h3>
+              <h3 className="text-sm font-bold text-orange-500 border-b border-border pb-1">5. Budget & Timeline</h3>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="space-y-1.5">
-                  <Label htmlFor="budget" className="text-slate-300 text-xs font-semibold">Estimated Budget</Label>
+                  <Label htmlFor="budget" className="text-foreground text-xs font-semibold">Estimated Budget</Label>
                   <Input
                     id="budget"
                     type="number"
                     value={leadBudget}
                     onChange={(e) => setLeadBudget(e.target.value)}
-                    className="bg-slate-950 border-slate-800 text-sm"
+                    className="bg-background border-border text-sm"
                     min="0"
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <Label htmlFor="currency" className="text-slate-300 text-xs font-semibold">Currency</Label>
+                  <Label htmlFor="currency" className="text-foreground text-xs font-semibold">Currency</Label>
                   <select
                     id="currency"
                     value={leadCurrency}
                     onChange={(e) => setLeadCurrency(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 text-slate-300 rounded p-2 text-sm focus:ring-1 focus:ring-orange-500 focus:outline-none"
+                    className="w-full bg-background border border-border text-foreground rounded p-2 text-sm focus:ring-1 focus:ring-orange-500 focus:outline-none"
                   >
                     <option value="BDT">BDT (৳)</option>
                     <option value="USD">USD ($)</option>
@@ -1862,12 +1862,12 @@ export const EmployeeDashboard: React.FC = () => {
                   </select>
                 </div>
                 <div className="space-y-1.5">
-                  <Label htmlFor="budgetRange" className="text-slate-300 text-xs font-semibold">Budget Range</Label>
+                  <Label htmlFor="budgetRange" className="text-foreground text-xs font-semibold">Budget Range</Label>
                   <Input
                     id="budgetRange"
                     value={leadBudgetRange}
                     onChange={(e) => setLeadBudgetRange(e.target.value)}
-                    className="bg-slate-950 border-slate-800 text-sm"
+                    className="bg-background border-border text-sm"
                     placeholder="e.g. $5k - $10k"
                   />
                 </div>
@@ -1875,22 +1875,22 @@ export const EmployeeDashboard: React.FC = () => {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
-                  <Label htmlFor="expectedStartDate" className="text-slate-300 text-xs font-semibold">Expected Start Date</Label>
+                  <Label htmlFor="expectedStartDate" className="text-foreground text-xs font-semibold">Expected Start Date</Label>
                   <Input
                     id="expectedStartDate"
                     type="date"
                     value={leadExpectedStartDate}
                     onChange={(e) => setLeadExpectedStartDate(e.target.value)}
-                    className="bg-slate-950 border-slate-800 text-sm"
+                    className="bg-background border-border text-sm"
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <Label htmlFor="expectedDeliveryTimeline" className="text-slate-300 text-xs font-semibold">Expected Delivery Timeline</Label>
+                  <Label htmlFor="expectedDeliveryTimeline" className="text-foreground text-xs font-semibold">Expected Delivery Timeline</Label>
                   <Input
                     id="expectedDeliveryTimeline"
                     value={leadExpectedDeliveryTimeline}
                     onChange={(e) => setLeadExpectedDeliveryTimeline(e.target.value)}
-                    className="bg-slate-950 border-slate-800 text-sm"
+                    className="bg-background border-border text-sm"
                     placeholder="e.g. 3 months"
                   />
                 </div>
@@ -1899,7 +1899,7 @@ export const EmployeeDashboard: React.FC = () => {
 
             {/* 6. Attachments */}
             <div className="space-y-4">
-              <h3 className="text-sm font-bold text-orange-500 border-b border-slate-800 pb-1">6. Attachments</h3>
+              <h3 className="text-sm font-bold text-orange-500 border-b border-border pb-1">6. Attachments</h3>
               <div className="space-y-1.5">
                 <Input
                   id="attachments"
@@ -1931,11 +1931,11 @@ export const EmployeeDashboard: React.FC = () => {
                       setLeadAttachments(prev => prev ? prev + ', ' + newUrls.join(', ') : newUrls.join(', '));
                     }
                   }}
-                  className="bg-slate-950 border-slate-800 text-sm text-slate-300 file:bg-slate-800 file:text-slate-300 file:border-0 file:rounded-md file:px-2 file:py-1 file:mr-2 cursor-pointer"
+                  className="bg-background border-border text-sm text-foreground file:bg-slate-800 file:text-foreground file:border-0 file:rounded-md file:px-2 file:py-1 file:mr-2 cursor-pointer"
                 />
                 {leadAttachments && (
-                  <div className="text-xs text-slate-400 mt-2 space-y-1">
-                    <p className="font-semibold text-slate-300">Uploaded Files:</p>
+                  <div className="text-xs text-muted-foreground mt-2 space-y-1">
+                    <p className="font-semibold text-foreground">Uploaded Files:</p>
                     {leadAttachments.split(',').map((url, idx) => (
                       <p key={idx} className="break-all">
                         <a href={`${import.meta.env.VITE_API_URL || 'https://api.gknetsolutions.co.uk/api'}`.replace('/api', '') + url.trim()} target="_blank" rel="noreferrer" className="text-blue-400 hover:underline">
@@ -1950,19 +1950,19 @@ export const EmployeeDashboard: React.FC = () => {
 
             {/* 7. Notes */}
             <div className="space-y-4">
-              <h3 className="text-sm font-bold text-orange-500 border-b border-slate-800 pb-1">7. Notes</h3>
+              <h3 className="text-sm font-bold text-orange-500 border-b border-border pb-1">7. Notes</h3>
               <div className="space-y-1.5">
                 <Textarea
                   id="notes"
                   value={leadNotes}
                   onChange={(e) => setLeadNotes(e.target.value)}
-                  className="bg-slate-950 border-slate-800 text-sm min-h-[80px] text-white"
+                  className="bg-background border-border text-sm min-h-[80px] text-foreground"
                   placeholder="Additional notes about the prospect..."
                 />
               </div>
             </div>
 
-            <DialogFooter className="pt-4 border-t border-slate-800">
+            <DialogFooter className="pt-4 border-t border-border">
               <Button
                 type="button"
                 variant="ghost"
@@ -1970,7 +1970,7 @@ export const EmployeeDashboard: React.FC = () => {
                   setShowCreateLeadModal(false);
                   resetCreateForm();
                 }}
-                className="text-slate-400 hover:bg-slate-800"
+                className="text-muted-foreground hover:bg-slate-800"
               >
                 Cancel
               </Button>
@@ -1994,21 +1994,21 @@ export const EmployeeDashboard: React.FC = () => {
           resetMeetingForm();
         }
       }}>
-        <DialogContent className="max-w-7xl w-[95vw] p-6 rounded-2xl border-border bg-slate-950 text-white overflow-hidden max-h-[95vh] flex flex-col">
+        <DialogContent className="max-w-7xl w-[95vw] p-6 rounded-2xl border-border bg-card text-foreground overflow-hidden max-h-[95vh] flex flex-col">
           {leadDetails ? (
             <div className="flex-1 flex flex-col overflow-hidden space-y-4">
               {/* Top Details Header */}
-              <div className="flex flex-col md:flex-row justify-between items-start md:items-center border-b border-slate-800 pb-3 gap-3">
+              <div className="flex flex-col md:flex-row justify-between items-start md:items-center border-b border-border pb-3 gap-3">
                 <div>
-                  <DialogTitle className="text-xl font-bold text-white flex items-center">
+                  <DialogTitle className="text-xl font-bold flex items-center text-foreground">
                     {`${leadDetails.firstName} ${leadDetails.lastName || ""}`.trim()}
                   </DialogTitle>
-                  <DialogDescription className="text-slate-400 text-xs mt-1">
+                  <DialogDescription className="text-muted-foreground text-xs mt-1">
                     Project Query: <span className="font-semibold text-slate-200">{leadDetails.projectTitle}</span>
                   </DialogDescription>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-[10px] text-slate-400">Status:</span>
+                  <span className="text-[10px] text-muted-foreground">Status:</span>
                   <Badge className="bg-orange-500/10 text-orange-400 border border-orange-500/25 px-2.5 py-0.5 text-xs font-semibold capitalize">
                     {leadDetails.status}
                   </Badge>
@@ -2016,7 +2016,7 @@ export const EmployeeDashboard: React.FC = () => {
                     variant="outline"
                     size="sm"
                     onClick={() => handleEditClick(leadDetails)}
-                    className="h-7 text-xs bg-slate-900 border-slate-700 hover:bg-slate-800 text-slate-300 ml-2"
+                    className="h-7 text-xs bg-card border-slate-700 hover:bg-slate-800 text-foreground ml-2"
                   >
                     <Edit className="w-3.5 h-3.5 mr-1.5" /> Edit
                   </Button>
@@ -2027,54 +2027,54 @@ export const EmployeeDashboard: React.FC = () => {
               <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-6 overflow-hidden min-h-[300px]">
 
                 {/* 1. LEFT PANEL - PROFILE & META INFO (4 cols) */}
-                <div className="lg:col-span-4 space-y-4 overflow-y-auto pr-2 border-r border-slate-800/60">
+                <div className="lg:col-span-4 space-y-4 overflow-y-auto pr-2 border-r border-border/60">
                   <div className="space-y-4">
                     {/* User Avatar Card */}
-                    <div className="bg-slate-900 border border-slate-800 p-4 rounded-xl flex items-center space-x-3">
+                    <div className="bg-card border border-border p-4 rounded-xl flex items-center space-x-3">
                       <div className="w-12 h-12 rounded-xl bg-orange-500/10 text-orange-500 flex items-center justify-center font-bold text-lg border border-orange-500/20">
                         {leadDetails.firstName[0] + (leadDetails.lastName?.[0] || "")}
                       </div>
                       <div>
-                        <h4 className="font-bold text-white text-sm">
+                        <h4 className="font-bold text-foreground text-sm">
                           {`${leadDetails.firstName} ${leadDetails.lastName || ""}`.trim()}
                         </h4>
-                        <p className="text-[10px] text-slate-400 italic">Acquired from {leadDetails.leadSource}</p>
+                        <p className="text-[10px] text-muted-foreground italic">Acquired from {leadDetails.leadSource}</p>
                       </div>
                     </div>
 
                     {/* Contact details */}
-                    <div className="bg-slate-900/60 border border-slate-800/80 p-4 rounded-xl space-y-3">
-                      <h5 className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider">Contact Information</h5>
+                    <div className="bg-card/60 border border-border/80 p-4 rounded-xl space-y-3">
+                      <h5 className="text-[11px] font-extrabold text-muted-foreground uppercase tracking-wider">Contact Information</h5>
 
                       <div className="space-y-2.5">
                         <a href={`mailto:${leadDetails.email}`} className="text-xs text-orange-400 hover:underline flex items-center">
-                          <Mail className="w-3.5 h-3.5 mr-2 shrink-0 text-slate-400" />
+                          <Mail className="w-3.5 h-3.5 mr-2 shrink-0 text-muted-foreground" />
                           {leadDetails.email}
                         </a>
 
                         {leadDetails.phone ? (
-                          <a href={`tel:${leadDetails.phone}`} className="text-xs text-slate-300 hover:underline flex items-center">
-                            <Phone className="w-3.5 h-3.5 mr-2 shrink-0 text-slate-400" />
+                          <a href={`tel:${leadDetails.phone}`} className="text-xs text-foreground hover:underline flex items-center">
+                            <Phone className="w-3.5 h-3.5 mr-2 shrink-0 text-muted-foreground" />
                             {leadDetails.phone}
                           </a>
                         ) : (
-                          <div className="text-xs text-slate-500 flex items-center italic">
+                          <div className="text-xs text-muted-foreground flex items-center italic">
                             <Phone className="w-3.5 h-3.5 mr-2 shrink-0 text-slate-600" />
                             No phone provided
                           </div>
                         )}
 
                         {leadDetails.skypeId ? (
-                          <div className="text-xs text-slate-300 flex items-center">
-                            <MessageSquare className="w-3.5 h-3.5 mr-2 shrink-0 text-slate-400" />
-                            <span className="text-slate-500 mr-1">Skype:</span>
+                          <div className="text-xs text-foreground flex items-center">
+                            <MessageSquare className="w-3.5 h-3.5 mr-2 shrink-0 text-muted-foreground" />
+                            <span className="text-muted-foreground mr-1">Skype:</span>
                             {leadDetails.skypeId}
                           </div>
                         ) : null}
 
                         {leadDetails.linkedinProfile ? (
                           <a href={leadDetails.linkedinProfile} target="_blank" rel="noreferrer" className="text-xs text-sky-400 hover:underline flex items-center">
-                            <Linkedin className="w-3.5 h-3.5 mr-2 shrink-0 text-slate-400" />
+                            <Linkedin className="w-3.5 h-3.5 mr-2 shrink-0 text-muted-foreground" />
                             LinkedIn Profile
                           </a>
                         ) : null}
@@ -2082,43 +2082,43 @@ export const EmployeeDashboard: React.FC = () => {
                     </div>
 
                     {/* Company info */}
-                    <div className="bg-slate-900/60 border border-slate-800/80 p-4 rounded-xl space-y-3">
-                      <h5 className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider">Company Profile</h5>
+                    <div className="bg-card/60 border border-border/80 p-4 rounded-xl space-y-3">
+                      <h5 className="text-[11px] font-extrabold text-muted-foreground uppercase tracking-wider">Company Profile</h5>
 
                       <div className="space-y-2">
                         {leadDetails.companyName && (
-                          <div className="text-xs text-slate-300 flex items-center">
-                            <Building2 className="w-3.5 h-3.5 mr-2 text-slate-400 shrink-0" />
-                            <span className="text-slate-500 mr-1">Company:</span>
+                          <div className="text-xs text-foreground flex items-center">
+                            <Building2 className="w-3.5 h-3.5 mr-2 text-muted-foreground shrink-0" />
+                            <span className="text-muted-foreground mr-1">Company:</span>
                             {leadDetails.companyName}
                           </div>
                         )}
 
                         {leadDetails.companyWebsite && (
-                          <a href={leadDetails.companyWebsite} target="_blank" rel="noreferrer" className="text-xs text-slate-300 hover:underline flex items-center">
-                            <Globe className="w-3.5 h-3.5 mr-2 text-slate-400 shrink-0" />
+                          <a href={leadDetails.companyWebsite} target="_blank" rel="noreferrer" className="text-xs text-foreground hover:underline flex items-center">
+                            <Globe className="w-3.5 h-3.5 mr-2 text-muted-foreground shrink-0" />
                             Visit Website
                           </a>
                         )}
 
                         {leadDetails.companySize && (
-                          <div className="text-xs text-slate-300 flex items-center">
-                            <Users className="w-3.5 h-3.5 mr-2 text-slate-400 shrink-0" />
-                            <span className="text-slate-500 mr-1">Size:</span>
+                          <div className="text-xs text-foreground flex items-center">
+                            <Users className="w-3.5 h-3.5 mr-2 text-muted-foreground shrink-0" />
+                            <span className="text-muted-foreground mr-1">Size:</span>
                             {leadDetails.companySize} employees
                           </div>
                         )}
 
-                        <div className="text-xs text-slate-300 flex items-center">
-                          <Clock className="w-3.5 h-3.5 mr-2 text-slate-400 shrink-0" />
-                          <span className="text-slate-500 mr-1">Timezone:</span>
+                        <div className="text-xs text-foreground flex items-center">
+                          <Clock className="w-3.5 h-3.5 mr-2 text-muted-foreground shrink-0" />
+                          <span className="text-muted-foreground mr-1">Timezone:</span>
                           {leadDetails.timezone}
                         </div>
 
                         {leadDetails.country && (
-                          <div className="text-xs text-slate-300 flex items-center">
-                            <Globe className="w-3.5 h-3.5 mr-2 text-slate-400 shrink-0" />
-                            <span className="text-slate-500 mr-1">Country:</span>
+                          <div className="text-xs text-foreground flex items-center">
+                            <Globe className="w-3.5 h-3.5 mr-2 text-muted-foreground shrink-0" />
+                            <span className="text-muted-foreground mr-1">Country:</span>
                             {leadDetails.country}
                           </div>
                         )}
@@ -2128,7 +2128,7 @@ export const EmployeeDashboard: React.FC = () => {
                 </div>
 
                 {/* 2. CENTER PANEL - TIMELINE / HISTORY FEED (5 cols) */}
-                <div className="lg:col-span-5 flex flex-col overflow-hidden border-r border-slate-800/60 pr-2">
+                <div className="lg:col-span-5 flex flex-col overflow-hidden border-r border-border/60 pr-2">
                   <div className="flex-1 flex flex-col overflow-hidden space-y-4">
                     {/* Add note/comment */}
                     <form onSubmit={handleAddComment} className="flex gap-2 items-center">
@@ -2136,7 +2136,7 @@ export const EmployeeDashboard: React.FC = () => {
                         placeholder="Log timeline update comment..."
                         value={newLogNote}
                         onChange={(e) => setNewLogNote(e.target.value)}
-                        className="bg-slate-900 border-slate-800 focus-visible:ring-orange-500 text-xs flex-1 h-9 text-white"
+                        className="bg-card border-border focus-visible:ring-orange-500 text-xs flex-1 h-9 text-foreground"
                         required
                       />
                       <Button
@@ -2152,7 +2152,7 @@ export const EmployeeDashboard: React.FC = () => {
 
                     {/* Timeline logs */}
                     <div className="flex-1 overflow-y-auto space-y-3 pr-1">
-                      <h5 className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider flex items-center mb-1">
+                      <h5 className="text-[11px] font-extrabold text-muted-foreground uppercase tracking-wider flex items-center mb-1">
                         <ClipboardList className="w-3.5 h-3.5 mr-1.5 text-orange-500" />
                         Interaction Audit Log
                       </h5>
@@ -2173,11 +2173,11 @@ export const EmployeeDashboard: React.FC = () => {
                             if (type.includes("Assigned")) return <UserCheck className="w-3.5 h-3.5 text-purple-400" />;
                             if (type.includes("Budget")) return <DollarSign className="w-3.5 h-3.5 text-amber-400" />;
                             if (type.includes("Meeting") || type.includes("Calendar")) return <CalendarIcon className="w-3.5 h-3.5 text-indigo-400" />;
-                            return <MessageSquare className="w-3.5 h-3.5 text-slate-400" />;
+                            return <MessageSquare className="w-3.5 h-3.5 text-muted-foreground" />;
                           };
 
                           return (
-                            <div key={log.id} className="flex items-start space-x-3 text-xs bg-slate-900/40 border border-slate-800/80 p-3 rounded-lg">
+                            <div key={log.id} className="flex items-start space-x-3 text-xs bg-card/40 border border-border/80 p-3 rounded-lg">
                               <div className="w-6 h-6 rounded bg-orange-500/10 text-orange-400 border border-orange-500/20 flex items-center justify-center font-bold uppercase shrink-0 text-[9px]">
                                 {initials}
                               </div>
@@ -2187,17 +2187,17 @@ export const EmployeeDashboard: React.FC = () => {
                                     {name}
                                     {getActivityIcon(log.activityType)}
                                   </span>
-                                  <span className="text-[10px] text-slate-500">
+                                  <span className="text-[10px] text-muted-foreground">
                                     {new Date(log.createdAt).toLocaleString(undefined, { dateStyle: "short", timeStyle: "short" })}
                                   </span>
                                 </div>
-                                <p className="text-slate-400 font-normal leading-relaxed">{log.comment}</p>
+                                <p className="text-muted-foreground font-normal leading-relaxed">{log.comment}</p>
                               </div>
                             </div>
                           );
                         })
                       ) : (
-                        <p className="text-xs text-slate-500 italic py-2">No timeline notes registered.</p>
+                        <p className="text-xs text-muted-foreground italic py-2">No timeline notes registered.</p>
                       )}
                     </div>
                   </div>
@@ -2205,11 +2205,11 @@ export const EmployeeDashboard: React.FC = () => {
 
                 {/* 3. RIGHT PANEL - QUICK ACTIONS (3 cols) */}
                 <div className="lg:col-span-3 space-y-4 overflow-y-auto pr-1">
-                  <h5 className="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider">Quick Actions</h5>
+                  <h5 className="text-[11px] font-extrabold text-muted-foreground uppercase tracking-wider">Quick Actions</h5>
 
                   {/* Stage Transition Selector */}
-                  <div className="bg-slate-900/60 border border-slate-800/80 p-3 rounded-xl space-y-2">
-                    <label className="text-[10px] uppercase font-bold text-slate-500 block">Transition Status</label>
+                  <div className="bg-card/60 border border-border/80 p-3 rounded-xl space-y-2">
+                    <label className="text-[10px] uppercase font-bold text-muted-foreground block">Transition Status</label>
                     <select
                       value={leadDetails.status}
                       onChange={(e) => {
@@ -2227,7 +2227,7 @@ export const EmployeeDashboard: React.FC = () => {
                           statusMutation.mutate({ leadId: leadDetails.id, status: targetStatus });
                         }
                       }}
-                      className="w-full bg-slate-950 border border-slate-850 hover:border-slate-800 text-xs text-white rounded-lg p-2 focus:ring-1 focus:ring-orange-500 focus:outline-none"
+                      className="w-full bg-background border border-border hover:border-border text-xs text-foreground rounded-lg p-2 focus:ring-1 focus:ring-orange-500 focus:outline-none"
                     >
                       {KANBAN_STAGES.map(s => (
                         <option key={s.value} value={s.value}>{s.label}</option>
@@ -2236,8 +2236,8 @@ export const EmployeeDashboard: React.FC = () => {
                   </div>
 
                   {/* Budget updater widget */}
-                  <div className="bg-slate-900/60 border border-slate-800/80 p-3 rounded-xl space-y-2">
-                    <label className="text-[10px] uppercase font-bold text-slate-500 block">Deal Budget ({leadDetails.currency})</label>
+                  <div className="bg-card/60 border border-border/80 p-3 rounded-xl space-y-2">
+                    <label className="text-[10px] uppercase font-bold text-muted-foreground block">Deal Budget ({leadDetails.currency})</label>
                     <div className="flex gap-2">
                       <Input
                         type="number"
@@ -2248,15 +2248,15 @@ export const EmployeeDashboard: React.FC = () => {
                             budgetMutation.mutate({ leadId: leadDetails.id, budget });
                           }
                         }}
-                        className="bg-slate-950 border-slate-850 focus-visible:ring-orange-500 text-xs h-8 text-white"
+                        className="bg-background border-border focus-visible:ring-orange-500 text-xs h-8 text-foreground"
                       />
                     </div>
                   </div>
 
                   {/* Assignee Card */}
-                  <div className="bg-slate-900/60 border border-slate-800/80 p-3 rounded-xl space-y-2">
-                    <label className="text-[10px] uppercase font-bold text-slate-500 block">Assigned Owner</label>
-                    <div className="flex items-center space-x-2 text-xs text-slate-300">
+                  <div className="bg-card/60 border border-border/80 p-3 rounded-xl space-y-2">
+                    <label className="text-[10px] uppercase font-bold text-muted-foreground block">Assigned Owner</label>
+                    <div className="flex items-center space-x-2 text-xs text-foreground">
                       <Award className="w-4 h-4 text-orange-500 shrink-0" />
                       <span className="font-semibold">
                         {leadDetails.assignedTo?.profile
@@ -2280,7 +2280,7 @@ export const EmployeeDashboard: React.FC = () => {
                         setShowScheduleForm(true);
                       }}
                       variant="outline"
-                      className="w-full border-slate-800 hover:bg-slate-900 text-white text-xs h-9 rounded-xl flex items-center justify-center gap-1.5"
+                      className="w-full border-border hover:bg-card text-foreground text-xs h-9 rounded-xl flex items-center justify-center gap-1.5"
                     >
                       <CalendarIcon className="w-3.5 h-3.5" />
                       Schedule Meeting/Call
@@ -2289,7 +2289,7 @@ export const EmployeeDashboard: React.FC = () => {
 
                   {/* NESTED MEETING SCHEDULER FORM */}
                   {showScheduleForm && (
-                    <form onSubmit={handleScheduleMeetingDirectly} className="bg-slate-900/80 border border-orange-500/20 p-3.5 rounded-xl space-y-3">
+                    <form onSubmit={handleScheduleMeetingDirectly} className="bg-card/80 border border-orange-500/20 p-3.5 rounded-xl space-y-3">
                       <div className="flex items-center justify-between">
                         <span className="text-[10px] font-extrabold uppercase text-orange-400 flex items-center gap-1">
                           <Video className="w-3 h-3" />
@@ -2302,7 +2302,7 @@ export const EmployeeDashboard: React.FC = () => {
                             setShowScheduleForm(false);
                             resetMeetingForm();
                           }}
-                          className="h-5 p-1 text-[10px] text-slate-500 hover:text-white"
+                          className="h-5 p-1 text-[10px] text-muted-foreground hover:text-foreground"
                         >
                           Cancel
                         </Button>
@@ -2310,21 +2310,21 @@ export const EmployeeDashboard: React.FC = () => {
 
                       <div className="space-y-2 text-xs">
                         <div>
-                          <label className="text-[9px] uppercase font-bold text-slate-500 block mb-1">Title</label>
+                          <label className="text-[9px] uppercase font-bold text-muted-foreground block mb-1">Title</label>
                           <Input
                             value={meetingTitle}
                             onChange={(e) => setMeetingTitle(e.target.value)}
                             required
-                            className="bg-slate-950 border-slate-850 focus-visible:ring-orange-500 text-xs h-7 text-white"
+                            className="bg-background border-border focus-visible:ring-orange-500 text-xs h-7 text-foreground"
                           />
                         </div>
 
                         <div>
-                          <label className="text-[9px] uppercase font-bold text-slate-500 block mb-1">Event Type</label>
+                          <label className="text-[9px] uppercase font-bold text-muted-foreground block mb-1">Event Type</label>
                           <select
                             value={meetingType}
                             onChange={(e) => setMeetingType(e.target.value)}
-                            className="w-full bg-slate-950 border border-slate-850 text-xs text-white rounded p-1 focus:ring-1 focus:ring-orange-500"
+                            className="w-full bg-background border border-border text-xs text-foreground rounded p-1 focus:ring-1 focus:ring-orange-500"
                           >
                             <option value="Meeting">Meeting</option>
                             <option value="Demo">Demo</option>
@@ -2334,7 +2334,7 @@ export const EmployeeDashboard: React.FC = () => {
                         </div>
 
                         <div>
-                          <label className="text-[9px] uppercase font-bold text-slate-500 block mb-1">Start Time</label>
+                          <label className="text-[9px] uppercase font-bold text-muted-foreground block mb-1">Start Time</label>
                           <DateTimePicker
                             value={meetingStartTime}
                             onChange={setMeetingStartTime}
@@ -2342,7 +2342,7 @@ export const EmployeeDashboard: React.FC = () => {
                         </div>
 
                         <div>
-                          <label className="text-[9px] uppercase font-bold text-slate-500 block mb-1">End Time</label>
+                          <label className="text-[9px] uppercase font-bold text-muted-foreground block mb-1">End Time</label>
                           <DateTimePicker
                             value={meetingEndTime}
                             onChange={setMeetingEndTime}
@@ -2350,12 +2350,12 @@ export const EmployeeDashboard: React.FC = () => {
                         </div>
 
                         <div>
-                          <label className="text-[9px] uppercase font-bold text-slate-500 block mb-1">Meeting Link (Optional)</label>
+                          <label className="text-[9px] uppercase font-bold text-muted-foreground block mb-1">Meeting Link (Optional)</label>
                           <Input
                             placeholder="Zoom or Meet link"
                             value={meetingLink}
                             onChange={(e) => setMeetingLink(e.target.value)}
-                            className="bg-slate-950 border-slate-850 focus-visible:ring-orange-500 text-xs h-7 text-white"
+                            className="bg-background border-border focus-visible:ring-orange-500 text-xs h-7 text-foreground"
                           />
                         </div>
                       </div>
@@ -2370,9 +2370,9 @@ export const EmployeeDashboard: React.FC = () => {
                   )}
 
                   {/* Visitor inquiry message block */}
-                  <div className="bg-slate-900/40 border border-slate-800/80 p-3 rounded-xl space-y-1.5 mt-2">
-                    <label className="text-[10px] uppercase font-bold text-slate-500 block">Initial Requirement</label>
-                    <p className="text-xs text-slate-400 leading-relaxed max-h-36 overflow-y-auto pr-0.5 whitespace-pre-wrap">
+                  <div className="bg-card/40 border border-border/80 p-3 rounded-xl space-y-1.5 mt-2">
+                    <label className="text-[10px] uppercase font-bold text-muted-foreground block">Initial Requirement</label>
+                    <p className="text-xs text-muted-foreground leading-relaxed max-h-36 overflow-y-auto pr-0.5 whitespace-pre-wrap">
                       {leadDetails.requirements || "No details provided."}
                     </p>
                   </div>

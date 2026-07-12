@@ -5,6 +5,9 @@ import { componentTagger } from "lovable-tagger";
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
+  // IMPORTANT: If you are deploying to a subdirectory in cPanel (e.g., example.com/crm/), 
+  // change this to: base: "/crm/"
+  base: "/", 
   server: {
     host: "::",
     port: 8080,

@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { fetchAPI } from "@/lib/api";
 import { 
@@ -91,6 +92,8 @@ export const DashboardOverview: React.FC = () => {
   const queryClient = useQueryClient();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const activeTab = searchParams.get("tab") || "analytics";
 
   // Form states
   const [formEmail, setFormEmail] = useState("");
@@ -373,7 +376,7 @@ export const DashboardOverview: React.FC = () => {
       </div>
 
       {/* Main Tabs Sections */}
-      <Tabs defaultValue="analytics" className="w-full space-y-6">
+      <Tabs value={activeTab} onValueChange={(val) => setSearchParams({ tab: val })} className="w-full space-y-6">
         <TabsList className="bg-card border border-border/50 p-1 rounded-xl w-full sm:w-auto flex overflow-x-auto">
           <TabsTrigger value="analytics" className="rounded-lg font-medium px-4 py-2 text-xs sm:text-sm">
             Overview & Funnel

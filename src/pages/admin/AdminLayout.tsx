@@ -12,7 +12,8 @@ import {
   ChevronDown, 
   Briefcase,
   HelpCircle,
-  ShieldAlert
+  ShieldAlert,
+  UserCheck
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { 
@@ -68,6 +69,7 @@ export const AdminLayout: React.FC = () => {
   const navItems = [
     { name: "Overview", path: "/admin", icon: LayoutDashboard },
     { name: "Lead Management", path: "/admin/leads", icon: Users },
+    { name: "Employee Management", path: "/admin?tab=employees", icon: UserCheck },
     { name: "Create Service", path: "/admin/services/new", icon: Layers },
     { name: "Create Project", path: "/admin/projects/new", icon: Briefcase },
   ];
@@ -118,7 +120,9 @@ export const AdminLayout: React.FC = () => {
         {/* Navigation Items */}
         <nav className="flex-1 px-4 py-6 space-y-1.5 overflow-y-auto">
           {navItems.map((item) => {
-            const isActive = location.pathname === item.path;
+            const isActive = item.path.includes("?")
+              ? (location.pathname + location.search) === item.path
+              : location.pathname === item.path && !location.search;
             const Icon = item.icon;
             return (
               <Link
